@@ -2007,6 +2007,333 @@ def premium_report(metal, currency, investment, models, featured_data, performan
     return filename
 
 
+
+# ==========================================================
+# FUTURE LAB — ADVANCED INTERACTIVE MARKET EXPERIENCE
+# ==========================================================
+
+def scenario_paths(metal, days, models, featured_data, inflation=0.0, usd_strength=0.0,
+                   rates=0.0, volatility_mult=1.0, correlation=0.5):
+    """Digital-twin scenario layer built around the model's base forecast."""
+    base = forecast_prices(metal, days, models, featured_data).copy()
+    current = float(featured_data[metal]["Close"].iloc[-1])
+    t = np.arange(1, days + 1) / max(days, 1)
+
+    # Assumption sensitivities are deliberately transparent scenario controls,
+    # not claims that these macro variables are direct features of the trained model.
+    macro = (0.020 * inflation - 0.025 * usd_strength - 0.018 * rates) * t
+    vol = float(featured_data[metal]["LogReturn"].tail(60).std()) * max(volatility_mult, 0.1)
+    corr_effect = (correlation - 0.5) * (0.008 if metal == "Silver" else 0.004) * t
+
+    base_price = base["Forecast"].values * np.exp(macro + corr_effect)
+    bull = base_price * np.exp((0.65 * vol * np.sqrt(np.arange(1, days + 1))) + 0.018 * t)
+    bear = base_price * np.exp((-0.65 * vol * np.sqrt(np.arange(1, days + 1))) - 0.018 * t)
+    stress = base_price * np.exp((-1.35 * vol * np.sqrt(np.arange(1, days + 1))) - 0.035 * t)
+
+    return pd.DataFrame({
+        "Date": base["Date"], "Base": base_price, "Bull": bull,
+        "Bear": bear, "Stress": stress, "Current": current
+    })
+
+
+def create_scenario_chart(paths, currency):
+    fig = go.Figure()
+    palette = {"Base": "#B8892E", "Bull": "#4C6B48", "Bear": "#A6493A", "Stress": "#5C4A32"}
+    for name in ["Base", "Bull", "Bear", "Stress"]:
+        fig.add_trace(go.Scatter(
+            x=paths["Date"], y=paths[name] * CURRENCIES[currency],
+            mode="lines", name=name, line=dict(width=3 if name == "Base" else 2, color=palette[name])
+        ))
+    fig.update_layout(height=480, hovermode="x unified", margin=dict(l=45,r=20,t=55,b=20),
+                      title="Digital Twin — Scenario Universe", **CHART_TEMPLATE)
+    fig.update_xaxes(showgrid=False)
+    fig.update_yaxes(gridcolor="#EFE4CD", title="Price")
+    return fig
+
+
+def monte_carlo_universe(metal, days, featured_data, models, simulations=300, seed=42):
+    base = forecast_prices(metal, days, models, featured_data)
+    base_prices = base["Forecast"].to_numpy(float)
+    current = float(featured_data[metal]["Close"].iloc[-1])
+    base_returns = np.diff(np.log(np.r_[current, base_prices]))
+    hist_vol = float(featured_data[metal]["LogReturn"].tail(90).std())
+    rng = np.random.default_rng(seed)
+
+    paths = np.zeros((simulations, days))
+    for i in range(simulations):
+        shocks = rng.normal(0, hist_vol, days)
+        simulated_returns = base_returns + shocks
+        paths[i] = current * np.exp(np.cumsum(simulated_returns))
+    return base["Date"], paths
+
+
+def create_monte_carlo_chart(dates, paths, currency):
+    fig = go.Figure()
+    # Draw a representative sample to keep browser rendering fast.
+    sample_n = min(100, paths.shape[0])
+    for row in paths[:sample_n]:
+        fig.add_trace(go.Scatter(
+            x=dates, y=row * CURRENCIES[currency], mode="lines",
+            line=dict(width=0.7, color="rgba(140,106,46,0.10)"),
+            hoverinfo="skip", showlegend=False
+        ))
+    p10, p50, p90 = np.percentile(paths, [10, 50, 90], axis=0)
+    fig.add_trace(go.Scatter(x=dates, y=p90*CURRENCIES[currency], mode="lines",
+                             line=dict(width=0), showlegend=False, hoverinfo="skip"))
+    fig.add_trace(go.Scatter(x=dates, y=p10*CURRENCIES[currency], mode="lines",
+                             fill="tonexty", fillcolor="rgba(184,137,46,0.18)",
+                             line=dict(width=0), name="10–90% Probability Cloud"))
+    fig.add_trace(go.Scatter(x=dates, y=p50*CURRENCIES[currency], mode="lines",
+                             name="Median Future", line=dict(color="#8C6A2E", width=3)))
+    fig.update_layout(height=500, title="Monte Carlo Future Universe", hovermode="x unified",
+                      margin=dict(l=45,r=20,t=55,b=20), **CHART_TEMPLATE)
+    fig.update_xaxes(showgrid=False)
+    fig.update_yaxes(gridcolor="#EFE4CD", title="Price")
+    return fig
+
+
+def render_prediction_beam(metal, featured_data, performance):
+    row = featured_data[metal].iloc[-1]
+    rsi = float(row["RSI"])
+    macd_state = "BULLISH" if row["MACD"] > row["MACD_SIGNAL"] else "BEARISH"
+    acc = performance[metal]["Directional Accuracy %"]
+    st.markdown(f"""
+    <style>
+    .beam-wrap{{background:radial-gradient(circle at center,#FFF8DE,#2E271F 72%);
+      border:1px solid rgba(184,137,46,.45);border-radius:18px;padding:32px 18px;overflow:hidden}}
+    .beam-flow{{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}}
+    .beam-node{{min-width:120px;padding:16px 12px;text-align:center;border-radius:14px;
+      background:rgba(255,253,247,.94);border:1px solid #B8892E;box-shadow:0 0 25px rgba(232,197,106,.18);
+      animation:beamPulse 2.2s ease-in-out infinite}}
+    .beam-node b{{display:block;color:#8C6A2E;font-family:'Playfair Display',serif;font-size:14px}}
+    .beam-node small{{color:#6B5D46}}
+    .beam-line{{height:2px;min-width:35px;flex:1;background:linear-gradient(90deg,transparent,#E8C56A,transparent);
+      background-size:200% 100%;animation:beamMove 1.2s linear infinite;box-shadow:0 0 12px #E8C56A}}
+    @keyframes beamMove{{to{{background-position:-200% 0}}}}
+    @keyframes beamPulse{{50%{{transform:translateY(-4px);box-shadow:0 0 35px rgba(232,197,106,.38)}}}}
+    </style>
+    <div class="beam-wrap"><div class="beam-flow">
+      <div class="beam-node"><b>LIVE DATA</b><small>{metal} futures</small></div><div class="beam-line"></div>
+      <div class="beam-node"><b>INDICATORS</b><small>RSI {rsi:.0f} · {macd_state}</small></div><div class="beam-line"></div>
+      <div class="beam-node"><b>MODEL CORE</b><small>RF + GBM</small></div><div class="beam-line"></div>
+      <div class="beam-node"><b>CONFIDENCE</b><small>{acc:.1f}% direction</small></div><div class="beam-line"></div>
+      <div class="beam-node"><b>FUTURE PRICE</b><small>recursive forecast</small></div>
+    </div></div>
+    """, unsafe_allow_html=True)
+
+
+def create_model_battle(metal, days, models, featured_data):
+    """Race RF, GBM and blend forward using the same recursive feature updates."""
+    history = featured_data[metal].copy()
+    outputs = {}
+    for mode in ["Random Forest", "Gradient Boosting", "Blend"]:
+        window = history.tail(INDICATOR_WINDOW + days).copy()
+        base_cols = ["Open","High","Low","Close","Volume"]
+        vals, dates = [], []
+        d = window.index[-1]
+        for _ in range(days):
+            x = window.iloc[-1:][FEATURE_COLUMNS]
+            if mode == "Random Forest":
+                pred = float(models[metal]["rf"].predict(x)[0])
+            elif mode == "Gradient Boosting":
+                pred = float(models[metal]["gbm"].predict(x)[0])
+            else:
+                pred = predict_next_return(models[metal], x)
+            price = float(window["Close"].iloc[-1]) * np.exp(pred)
+            d += timedelta(days=1)
+            dates.append(d); vals.append(price)
+            nr = pd.DataFrame({"Open":[price],"High":[price*1.002],"Low":[price*.998],
+                               "Close":[price],"Volume":[float(window["Volume"].tail(10).mean())]}, index=[d])
+            window = pd.concat([window[base_cols], nr[base_cols]])
+            window = add_indicators(window.astype(float)).ffill().bfill()
+        outputs[mode] = vals
+    return pd.DataFrame({"Date": dates, **outputs})
+
+
+def time_machine_backtest(metal, cutoff, days, featured_data):
+    """Historical reveal: simple walk-forward baseline using data available at cutoff.
+    It intentionally avoids retraining the expensive ensemble on every UI rerun."""
+    full = featured_data[metal]
+    cutoff = pd.Timestamp(cutoff)
+    past = full.loc[full.index <= cutoff]
+    future = full.loc[full.index > cutoff].head(days)
+    if len(past) < 80 or future.empty:
+        return None
+    # Trend/volatility projection frozen at cutoff, then reveal actual reality.
+    recent = past["LogReturn"].tail(30)
+    drift = float(recent.mean())
+    start = float(past["Close"].iloc[-1])
+    pred = start * np.exp(np.cumsum(np.repeat(drift, len(future))))
+    return pd.DataFrame({"Date": future.index, "Prediction": pred, "Reality": future["Close"].values})
+
+
+def relationship_chart(featured_data, window=180):
+    g = featured_data["Gold"]["Close"].pct_change()
+    s = featured_data["Silver"]["Close"].pct_change()
+    joined = pd.concat([g.rename("Gold"), s.rename("Silver")], axis=1).dropna().tail(window)
+    rolling_corr = joined["Gold"].rolling(30).corr(joined["Silver"])
+    ratio = (featured_data["Gold"]["Close"] / featured_data["Silver"]["Close"]).dropna().tail(window)
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=rolling_corr.index, y=rolling_corr, name="30D Correlation",
+                             line=dict(color="#B8892E", width=3)))
+    fig.add_trace(go.Scatter(x=ratio.index, y=(ratio-ratio.mean())/ratio.std(), name="Gold/Silver Ratio (z-score)",
+                             yaxis="y2", line=dict(color="#6B7280", width=2)))
+    fig.update_layout(height=430, title="Gold ↔ Silver Relationship Map",
+                      yaxis=dict(title="Correlation", range=[-1,1]),
+                      yaxis2=dict(title="Ratio z-score", overlaying="y", side="right"),
+                      margin=dict(l=45,r=45,t=55,b=20), **CHART_TEMPLATE)
+    return fig, float(rolling_corr.dropna().iloc[-1])
+
+
+def prediction_dna(metal, models, featured_data):
+    """Transparent local influence proxy: RF importance × standardized latest feature value.
+    This is an explanatory proxy, not SHAP."""
+    df = featured_data[metal]
+    latest = df[FEATURE_COLUMNS].iloc[-1]
+    mu = df[FEATURE_COLUMNS].tail(250).mean()
+    sd = df[FEATURE_COLUMNS].tail(250).std().replace(0, np.nan)
+    z = ((latest - mu) / sd).fillna(0)
+    imp = pd.Series(models[metal]["rf"].feature_importances_, index=FEATURE_COLUMNS)
+    influence = (imp * z).sort_values(key=np.abs, ascending=False).head(10)
+    fig = go.Figure(go.Bar(
+        x=influence.values, y=influence.index, orientation="h",
+        marker=dict(color=["#4C6B48" if v >= 0 else "#A6493A" for v in influence.values])
+    ))
+    fig.update_layout(height=410, title="Prediction DNA — Local Influence Proxy",
+                      margin=dict(l=110,r=20,t=55,b=20), **CHART_TEMPLATE)
+    return fig
+
+
+def render_3d_metal_world():
+    st.markdown("""
+    <style>
+    .metal-world{height:320px;display:flex;justify-content:center;align-items:center;gap:12vw;
+      perspective:900px;background:radial-gradient(circle at 50% 50%,rgba(232,197,106,.18),transparent 55%);
+      border-radius:24px;overflow:hidden}
+    .metal-orb{width:170px;height:170px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+      font-family:'Playfair Display',serif;font-size:25px;font-weight:700;letter-spacing:.12em;
+      box-shadow:inset -25px -25px 45px rgba(0,0,0,.22),inset 18px 18px 35px rgba(255,255,255,.45),0 30px 55px rgba(46,39,31,.18);
+      animation:orbFloat 4s ease-in-out infinite;transition:.5s transform,.5s box-shadow}
+    .metal-orb:hover{transform:rotateY(22deg) rotateX(-12deg) scale(1.12);box-shadow:0 35px 80px rgba(184,137,46,.35)}
+    .gold-orb{background:radial-gradient(circle at 30% 25%,#FFF1A8,#D6A83C 38%,#8C6A2E 75%,#4A3210);color:#FFF8DE}
+    .silver-orb{background:radial-gradient(circle at 30% 25%,#FFFFFF,#D8DCE2 38%,#7A808A 75%,#3D4148);color:white;animation-delay:-2s}
+    @keyframes orbFloat{50%{transform:translateY(-18px) rotateY(12deg)}}
+    </style>
+    <div class="metal-world">
+      <div class="metal-orb gold-orb">GOLD</div>
+      <div class="metal-orb silver-orb">SILVER</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+
+def render_future_lab(models, featured_data, performance, performance_df):
+    st.markdown("## Future Lab")
+    st.caption("Experimental market-simulation and explainability workspace. Scenario controls are educational assumptions, not financial advice.")
+
+    render_3d_metal_world()
+
+    c1, c2, c3 = st.columns([1,1,1])
+    with c1:
+        lab_metal = st.selectbox("Metal", ["Gold","Silver"], key="lab_metal")
+    with c2:
+        lab_currency = st.selectbox("Currency", list(CURRENCIES.keys()), key="lab_currency")
+    with c3:
+        lab_days = st.slider("Horizon", 7, 90, 30, key="lab_days")
+
+    st.markdown("### AI Prediction Beam")
+    render_prediction_beam(lab_metal, featured_data, performance)
+
+    st.markdown("### Digital Twin Market Engine")
+    a,b,c,d,e = st.columns(5)
+    with a: inflation = st.slider("Inflation shock", -2.0, 5.0, 0.0, .25, key="twin_inf")
+    with b: usd = st.slider("USD strength", -3.0, 3.0, 0.0, .25, key="twin_usd")
+    with c: rates = st.slider("Rate shock", -2.0, 3.0, 0.0, .25, key="twin_rates")
+    with d: vol_mult = st.slider("Volatility ×", .5, 2.5, 1.0, .1, key="twin_vol")
+    with e: corr = st.slider("Gold/Silver corr.", -1.0, 1.0, .5, .1, key="twin_corr")
+    paths = scenario_paths(lab_metal, lab_days, models, featured_data, inflation, usd, rates, vol_mult, corr)
+    st.plotly_chart(create_scenario_chart(paths, lab_currency), use_container_width=True, key="digital_twin_chart")
+
+    st.markdown("### Monte Carlo Future Universe")
+    mc1, mc2 = st.columns([1,2])
+    with mc1:
+        sims = st.slider("Simulations", 100, 1000, 400, 100, key="mc_sims")
+        target_default = float(featured_data[lab_metal]["Close"].iloc[-1] * 1.03 * CURRENCIES[lab_currency])
+        target = st.number_input("Target price", value=round(target_default,2), key="mc_target")
+    dates, universe = monte_carlo_universe(lab_metal, lab_days, featured_data, models, sims)
+    probability = float(np.mean(universe[:,-1] * CURRENCIES[lab_currency] >= target) * 100)
+    with mc2:
+        st.metric(f"Probability {lab_metal} ≥ {lab_currency} {target:,.2f}", f"{probability:.1f}%")
+    st.plotly_chart(create_monte_carlo_chart(dates, universe, lab_currency), use_container_width=True, key="mc_chart")
+
+    st.markdown("### AI Model Battle Arena")
+    battle = create_model_battle(lab_metal, lab_days, models, featured_data)
+    fig = go.Figure()
+    for name, color in [("Random Forest","#3B6FA0"),("Gradient Boosting","#A6493A"),("Blend","#B8892E")]:
+        fig.add_trace(go.Scatter(x=battle["Date"], y=battle[name]*CURRENCIES[lab_currency],
+                                 mode="lines", name=name, line=dict(width=3 if name=="Blend" else 2, color=color)))
+    fig.update_layout(height=430, title="RF vs GBM vs Blended Ensemble", **CHART_TEMPLATE)
+    st.plotly_chart(fig, use_container_width=True, key="battle_chart")
+    st.dataframe(performance_df.loc[[lab_metal]], use_container_width=True)
+
+    st.markdown("### Prediction DNA")
+    st.plotly_chart(prediction_dna(lab_metal, models, featured_data), use_container_width=True, key="dna_chart")
+    st.caption("Prediction DNA uses feature importance × latest standardized feature value as a local influence proxy; it is not SHAP attribution.")
+
+    st.markdown("### Gold ↔ Silver Relationship Map")
+    rel_fig, corr_now = relationship_chart(featured_data)
+    st.plotly_chart(rel_fig, use_container_width=True, key="relationship_chart")
+    if abs(corr_now) < 0.2:
+        st.warning(f"DIVERGENCE DETECTED — current 30-day return correlation is {corr_now:.2f}.")
+    else:
+        st.info(f"Current 30-day Gold/Silver return correlation: {corr_now:.2f}")
+
+    st.markdown("### Time Machine + Reveal Reality")
+    tm1, tm2 = st.columns(2)
+    min_date = featured_data[lab_metal].index.min().date() + timedelta(days=365)
+    max_date = featured_data[lab_metal].index.max().date() - timedelta(days=45)
+    default_date = max(min_date, max_date - timedelta(days=365))
+    with tm1:
+        cutoff = st.date_input("Travel to date", value=default_date, min_value=min_date, max_value=max_date, key="tm_date")
+    with tm2:
+        reveal = st.toggle("Reveal Reality", value=False, key="tm_reveal")
+    tm = time_machine_backtest(lab_metal, cutoff, min(30, lab_days), featured_data)
+    if tm is not None:
+        tf = go.Figure()
+        tf.add_trace(go.Scatter(x=tm["Date"], y=tm["Prediction"]*CURRENCIES[lab_currency],
+                                name="Prediction from cutoff", line=dict(color="#B8892E", width=3, dash="dash")))
+        if reveal:
+            tf.add_trace(go.Scatter(x=tm["Date"], y=tm["Reality"]*CURRENCIES[lab_currency],
+                                    name="Reality", line=dict(color="#2E271F", width=3)))
+        tf.update_layout(height=400, title=f"Time Machine — {cutoff}", **CHART_TEMPLATE)
+        st.plotly_chart(tf, use_container_width=True, key="time_machine_chart")
+
+    st.markdown("### Market Replay Mode")
+    replay_max = min(180, len(featured_data[lab_metal]))
+    replay_step = st.slider("Replay frame", 30, replay_max, replay_max, key="replay_step")
+    replay_df = featured_data[lab_metal].tail(replay_max).head(replay_step)
+    rf = go.Figure(go.Scatter(x=replay_df.index, y=replay_df["Close"]*CURRENCIES[lab_currency],
+                              mode="lines", line=dict(color="#B8892E", width=3), name=lab_metal))
+    rf.update_layout(height=360, title="Drag the frame slider to replay market history", **CHART_TEMPLATE)
+    st.plotly_chart(rf, use_container_width=True, key="replay_chart")
+
+    st.markdown("### Command Centre Mode")
+    stats = dashboard_metrics(lab_metal, lab_currency, models, featured_data, performance, lab_days)
+    pulse = compute_market_pulse(lab_metal, featured_data, performance, stats["Expected Return"])
+    st.markdown(f"""
+    <div style="background:#211B14;color:#F7F1E4;border:1px solid #B8892E;border-radius:20px;padding:28px;
+      box-shadow:0 20px 60px rgba(46,39,31,.22);">
+      <div style="font-size:12px;letter-spacing:.25em;color:#E8C56A">COMMAND CENTRE / {lab_metal.upper()}</div>
+      <div style="display:flex;gap:35px;flex-wrap:wrap;margin-top:16px">
+        <div><small style="color:#C9B98F">CURRENT</small><div style="font-size:34px;font-family:'Playfair Display'">{lab_currency} {stats['Current Price']:,.2f}</div></div>
+        <div><small style="color:#C9B98F">{lab_days}D FUTURE</small><div style="font-size:34px;font-family:'Playfair Display'">{lab_currency} {stats['Forecast Price']:,.2f}</div></div>
+        <div><small style="color:#C9B98F">SIGNAL</small><div style="font-size:34px;font-family:'Playfair Display';color:#E8C56A">{stats['Signal']}</div></div>
+        <div><small style="color:#C9B98F">PULSE</small><div style="font-size:34px;font-family:'Playfair Display'">{pulse['label']}</div></div>
+        <div><small style="color:#C9B98F">CONFIDENCE</small><div style="font-size:34px;font-family:'Playfair Display'">{stats['Confidence']:.1f}%</div></div>
+      </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+
 # ==========================================================
 # APP LAYOUT
 # ==========================================================
@@ -2038,10 +2365,13 @@ with st.spinner("Loading market data and training models..."):
 
 (
     tab_forecast, tab_pulse, tab_advisor, tab_comparison,
-    tab_news, tab_reports, tab_analytics, tab_about,
+    tab_news, tab_reports, tab_analytics, tab_future_lab, tab_about,
 ) = st.tabs(
-    ["Forecast", "Market Pulse", "Advisor", "Comparison", "Market News", "Reports", "Analytics", "About"]
+    ["Forecast", "Market Pulse", "Advisor", "Comparison", "Market News", "Reports", "Analytics", "Future Lab", "About"]
 )
+
+with tab_future_lab:
+    render_future_lab(models, featured_data, performance, performance_df)
 
 # ---------------- FORECAST TAB ----------------
 with tab_forecast:
