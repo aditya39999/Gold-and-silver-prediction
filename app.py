@@ -390,6 +390,100 @@ h1, h2, h3, .app-header h1 {
     font-size: 13px !important;
     font-weight: 600;
 }
+
+/* "Why this recommendation?" expander: force high-contrast cream/gold styling
+   on the header so it never inherits a dark background with dark text. */
+[data-testid="stExpander"] {
+    background: #FFFDF7 !important;
+    border: 1px solid rgba(184,137,46,0.3) !important;
+    border-radius: 6px !important;
+    margin-top: 6px !important;
+    margin-bottom: 2px !important;
+}
+[data-testid="stExpander"] summary {
+    background: #FFFDF7 !important;
+    color: #2E271F !important;
+    border-radius: 6px !important;
+    padding: 8px 12px !important;
+}
+[data-testid="stExpander"] summary:hover {
+    background: #F3E4C2 !important;
+}
+[data-testid="stExpander"] summary p,
+[data-testid="stExpander"] summary span,
+[data-testid="stExpander"] summary svg {
+    color: #2E271F !important;
+    fill: #2E271F !important;
+    font-weight: 600 !important;
+}
+[data-testid="stExpanderDetails"] {
+    background: #FFFDF7 !important;
+    color: #2E271F !important;
+}
+
+/* Tight spacer used to pull the forecast chart closer to the expander above it */
+div.element-container:has(> div > div.chart-spacer) {
+    margin-top: -26px;
+    margin-bottom: -26px;
+    height: 0;
+    overflow: hidden;
+}
+
+/* Small circular info icon + hover tooltip, used to explain the Confidence score */
+.info-tooltip {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: help;
+    margin-left: 5px;
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    background: rgba(59,111,160,0.18);
+    color: #3B6FA0;
+    font-size: 11px;
+    font-weight: 700;
+    font-family: Georgia, serif;
+    vertical-align: middle;
+}
+.info-tooltip .tooltip-text {
+    visibility: hidden;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    position: absolute;
+    z-index: 20;
+    bottom: 135%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 250px;
+    background: #2E271F;
+    color: #F7F1E4;
+    text-align: left;
+    padding: 10px 12px;
+    border-radius: 6px;
+    font-size: 12.5px;
+    font-weight: 400;
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    line-height: 1.45;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    white-space: normal;
+    pointer-events: none;
+}
+.info-tooltip .tooltip-text::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: #2E271F transparent transparent transparent;
+}
+.info-tooltip:hover .tooltip-text {
+    visibility: visible;
+    opacity: 1;
+}
 </style>
 """
 
@@ -1407,6 +1501,7 @@ with tab_forecast:
     change_24h = compute_24h_change(featured_data, metal)
     arrow, trend_class = trend_arrow(change_24h)
     dir_acc = performance[metal]["Directional Accuracy %"]
+    r2_pct = max(performance[metal]["R2 (price)"], 0) * 100
     conf_label, conf_text_color, conf_bar_color = confidence_tier(stats["Confidence"])
 
     c1, c2, c3, c4 = st.columns(4)
@@ -1426,8 +1521,17 @@ with tab_forecast:
             unsafe_allow_html=True,
         )
     with c3:
+        confidence_tooltip = (
+            f"Confidence = 0.7 &times; Directional Accuracy + 0.3 &times; R&sup2; (as %).<br><br>"
+            f"Directional Accuracy ({dir_acc:.1f}%) is how often the model got the "
+            f"up/down direction right, not the exact price.<br>"
+            f"R&sup2; ({r2_pct:.1f}%) is how well predicted prices fit actual prices.<br><br>"
+            f"It's a weighted blend, so it will not equal either number on its own — "
+            f"that's why it can read higher than the accuracy figure below."
+        )
         st.markdown(
-            f"""<div class="metric-card accent-info"><h4>Confidence</h4>
+            f"""<div class="metric-card accent-info"><h4>Confidence
+            <span class="info-tooltip">i<span class="tooltip-text">{confidence_tooltip}</span></span></h4>
             <h2>{stats['Confidence']}%</h2>
             <div class="confidence-bar-wrap"><div class="confidence-bar-fill" style="width:{min(stats['Confidence'], 100)}%; background:{conf_bar_color};"></div></div>
             <div class="confidence-tier-label" style="color:{conf_text_color}; background:{conf_bar_color}22;">{conf_label} Confidence</div>
@@ -1445,6 +1549,7 @@ with tab_forecast:
         for reason in signal_reasoning(metal, stats, featured_data, performance, forecast_days):
             st.markdown(f"- {reason}")
 
+    st.markdown('<div class="chart-spacer"></div>', unsafe_allow_html=True)
     st.plotly_chart(create_forecast_chart(metal, forecast, featured_data, currency), use_container_width=True)
     st.caption(
         "Drag the range slider or use the buttons above the chart to zoom into a time period. "
