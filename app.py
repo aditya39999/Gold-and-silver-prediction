@@ -156,6 +156,7 @@ h1, h2, h3, .app-header h1 {
     border-top: 4px solid #B8892E;
     text-align: center;
     box-shadow: 0 1px 3px rgba(46,39,31,0.06);
+    animation: card-rise 0.45s ease both;
 }
 .metric-card.accent-neutral { border-top-color: #B8892E; }
 .metric-card.accent-good { border-top-color: #4C6B48; }
@@ -183,6 +184,11 @@ h1, h2, h3, .app-header h1 {
     line-height: 1.4;
 }
 
+@keyframes card-rise {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
 /* Pill badge used for 24H change / expected return / model accuracy */
 .trend-pill {
     display: inline-flex;
@@ -198,7 +204,7 @@ h1, h2, h3, .app-header h1 {
 .trend-pill.trend-down { background: rgba(166,73,58,0.14); color: #8C3A2C; }
 .trend-pill.trend-flat { background: rgba(140,122,84,0.14); color: #6B5D46; }
 
-/* Confidence progress bar, color-coded by tier */
+/* Confidence progress bar, color-coded by tier, animated fill */
 .confidence-bar-wrap {
     margin-top: 10px;
     height: 8px;
@@ -206,7 +212,17 @@ h1, h2, h3, .app-header h1 {
     background: rgba(46,39,31,0.08);
     overflow: hidden;
 }
-.confidence-bar-fill { height: 100%; border-radius: 999px; }
+.confidence-bar-fill {
+    height: 100%;
+    border-radius: 999px;
+    width: 0%;
+    animation: fill-bar 1.1s ease forwards;
+    animation-delay: 0.1s;
+}
+@keyframes fill-bar {
+    from { width: 0%; }
+    to   { width: var(--target-width); }
+}
 .confidence-tier-label {
     display: inline-block;
     margin-top: 8px;
@@ -235,11 +251,55 @@ h1, h2, h3, .app-header h1 {
     font-weight: 700;
     font-family: 'Playfair Display', Georgia, serif;
     letter-spacing: 0.03em;
+    animation: badge-pop 0.4s cubic-bezier(.34,1.56,.64,1) both;
 }
 .signal-badge.signal-strong-buy { background: #33502F; color: #F7F1E4; }
 .signal-badge.signal-buy { background: #DCE8D8; color: #2E4A2A; border: 1px solid rgba(76,107,72,0.4); }
 .signal-badge.signal-hold { background: #F3E4C2; color: #7A5B1E; border: 1px solid rgba(184,137,46,0.4); }
 .signal-badge.signal-sell { background: #8C3A2C; color: #FBEDE9; }
+
+@keyframes badge-pop {
+    from { opacity: 0; transform: scale(0.85); }
+    to   { opacity: 1; transform: scale(1); }
+}
+
+/* Sentiment pulse badges (Bullish / Neutral / Bearish) */
+.pulse-badge {
+    display: inline-block;
+    padding: 8px 22px;
+    border-radius: 999px;
+    font-size: 19px;
+    font-weight: 700;
+    font-family: 'Playfair Display', Georgia, serif;
+    letter-spacing: 0.04em;
+    animation: badge-pop 0.4s cubic-bezier(.34,1.56,.64,1) both;
+}
+.pulse-badge.pulse-bullish { background: #33502F; color: #F7F1E4; }
+.pulse-badge.pulse-neutral { background: #F3E4C2; color: #7A5B1E; border: 1px solid rgba(184,137,46,0.4); }
+.pulse-badge.pulse-bearish { background: #8C3A2C; color: #FBEDE9; }
+
+.pulse-score-wrap {
+    margin-top: 12px;
+    height: 10px;
+    border-radius: 999px;
+    background: rgba(46,39,31,0.08);
+    position: relative;
+    overflow: hidden;
+}
+.pulse-score-fill {
+    height: 100%;
+    border-radius: 999px;
+    width: 0%;
+    animation: fill-bar 1.1s ease forwards;
+    animation-delay: 0.15s;
+}
+.pulse-reason-list {
+    margin-top: 10px;
+    padding-left: 18px;
+    font-size: 15px;
+    line-height: 1.55;
+}
+.pulse-reason-list li { margin-bottom: 3px; }
 
 .live-banner {
     background: #FFFDF7;
@@ -254,7 +314,22 @@ h1, h2, h3, .app-header h1 {
 }
 .live-banner .live-item { text-align: left; line-height: 1.25; white-space: nowrap; }
 .live-banner .live-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: #8C7A54; }
-.live-banner .live-value { font-weight: 700; }
+.live-banner .live-value {
+    font-weight: 700;
+    display: inline-block;
+    transition: color 0.3s ease;
+}
+.live-banner .live-value.flash-up { animation: flash-green 0.9s ease; }
+.live-banner .live-value.flash-down { animation: flash-red 0.9s ease; }
+
+@keyframes flash-green {
+    0%   { background-color: rgba(76,107,72,0.35); }
+    100% { background-color: rgba(76,107,72,0); }
+}
+@keyframes flash-red {
+    0%   { background-color: rgba(166,73,58,0.35); }
+    100% { background-color: rgba(166,73,58,0); }
+}
 
 .live-dot {
     display: inline-block;
@@ -334,11 +409,13 @@ h1, h2, h3, .app-header h1 {
     font-weight: 600;
     font-size: 17px;
     padding: 0.5rem 1.2rem;
+    transition: transform 0.15s ease, background 0.15s ease;
 }
 .stButton > button:hover, .stDownloadButton > button:hover {
     background: #B8892E;
     color: #FFFDF7;
     border-color: #B8892E;
+    transform: translateY(-1px);
 }
 .stButton > button[kind="primary"] {
     background: #B8892E;
@@ -373,6 +450,7 @@ h1, h2, h3, .app-header h1 {
     padding: 14px 16px;
     border-radius: 4px;
     border: 1px solid rgba(184,137,46,0.3);
+    animation: card-rise 0.45s ease both;
 }
 [data-testid="stMetricLabel"] {
     font-family: 'Cormorant Garamond', Georgia, serif;
@@ -427,6 +505,15 @@ div.element-container:has(> div > div.chart-spacer) {
     margin-bottom: -26px;
     height: 0;
     overflow: hidden;
+}
+
+/* Chart reveal animation: sweeps in from the left when a chart is (re)drawn */
+.chart-reveal {
+    animation: chart-sweep 0.9s ease;
+}
+@keyframes chart-sweep {
+    from { clip-path: inset(0 100% 0 0); }
+    to   { clip-path: inset(0 0 0 0); }
 }
 
 /* Small circular info icon + hover tooltip, used to explain the Confidence score */
@@ -484,10 +571,61 @@ div.element-container:has(> div > div.chart-spacer) {
     visibility: visible;
     opacity: 1;
 }
+
+/* Scenario simulator slider readout */
+.scenario-readout {
+    background: #FFFDF7;
+    border: 1px solid rgba(184,137,46,0.3);
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin-top: 10px;
+    animation: card-rise 0.4s ease both;
+}
+.scenario-readout .scenario-value {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 24px;
+    font-weight: 700;
+}
 </style>
 """
 
 st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
+
+
+def animated_counter(value_text, prefix="", suffix="", color="#1F1811", size="27px", duration=900, key=""):
+    """
+    Renders a number that counts up from 0 to `value_text` using a small
+    inline JS animation. Falls back gracefully if the value isn't numeric.
+    """
+    try:
+        target = float(str(value_text).replace(",", ""))
+    except (TypeError, ValueError):
+        st.markdown(f"<h2 style='color:{color};font-size:{size};margin:0;'>{prefix}{value_text}{suffix}</h2>", unsafe_allow_html=True)
+        return
+
+    decimals = 2 if not float(target).is_integer() else 0
+    html = f"""
+    <div id="counter-{key}" style="font-family:'Playfair Display',Georgia,serif;font-size:{size};font-weight:700;color:{color};margin:0;">0</div>
+    <script>
+    (function() {{
+        const el = document.getElementById("counter-{key}");
+        const target = {target};
+        const decimals = {decimals};
+        const duration = {duration};
+        const start = performance.now();
+        function step(now) {{
+            const progress = Math.min((now - start) / duration, 1);
+            const eased = 1 - Math.pow(1 - progress, 3);
+            const current = target * eased;
+            el.textContent = "{prefix}" + current.toFixed(decimals).replace(/\\B(?=(\\d{{3}})+(?!\\d))/g, ",") + "{suffix}";
+            if (progress < 1) requestAnimationFrame(step);
+        }}
+        requestAnimationFrame(step);
+    }})();
+    </script>
+    """
+    import streamlit.components.v1 as components
+    components.html(html, height=int(size.replace("px", "")) + 10)
 
 
 # ==========================================================
@@ -614,6 +752,7 @@ def train_models_for_metal(df):
     X_train, X_test = X.iloc[:split_index], X.iloc[split_index:]
     y_train, y_test = y.iloc[:split_index], y.iloc[split_index:]
     close_test = close_at_t.iloc[split_index:]
+    dates_test = data.index[split_index:]
 
     rf = RandomForestRegressor(
         n_estimators=400, max_depth=10, min_samples_leaf=3,
@@ -633,6 +772,14 @@ def train_models_for_metal(df):
 
     actual_price_next = close_test.values * np.exp(y_test.values)
     predicted_price_next = close_test.values * np.exp(pred_return_blend)
+
+    # Keep the test-period predicted-vs-actual series for the "Prediction
+    # History" chart in the Analytics tab.
+    prediction_history = pd.DataFrame({
+        "Date": dates_test,
+        "Actual": actual_price_next,
+        "Predicted": predicted_price_next,
+    })
 
     tscv = TimeSeriesSplit(n_splits=CV_SPLITS)
     cv_dir_acc = []
@@ -656,15 +803,15 @@ def train_models_for_metal(df):
         "Directional Accuracy %": round(directional_accuracy, 2),
     }
 
-    return {"rf": rf, "gbm": gbm}, perf
+    return {"rf": rf, "gbm": gbm}, perf, prediction_history
 
 
 @st.cache_resource(show_spinner=False)
 def train_all_models():
     featured_data = build_featured_data()
-    models, performance = {}, {}
+    models, performance, prediction_history = {}, {}, {}
     for metal, df in featured_data.items():
-        models[metal], performance[metal] = train_models_for_metal(df)
+        models[metal], performance[metal], prediction_history[metal] = train_models_for_metal(df)
 
     performance_df = pd.DataFrame(performance).T.round(4)
 
@@ -676,7 +823,7 @@ def train_all_models():
         }).sort_values("Importance", ascending=False)
         feature_importance[metal] = imp
 
-    return models, performance, performance_df, feature_importance
+    return models, performance, performance_df, feature_importance, prediction_history
 
 
 # ==========================================================
@@ -881,6 +1028,85 @@ def create_forecast_chart(metal, forecast, featured_data, currency):
     return fig
 
 
+def create_technical_chart(metal, featured_data, indicator, currency, window_days=180):
+    """Builds a standalone chart for a single technical indicator (RSI, MACD, SMA overlay, or Volatility)."""
+    history = featured_data[metal].tail(window_days).copy()
+    fig = go.Figure()
+
+    if indicator == "RSI":
+        fig.add_trace(go.Scatter(x=history.index, y=history["RSI"], mode="lines",
+                                  name="RSI", line=dict(color="#3B6FA0", width=2)))
+        fig.add_hline(y=70, line=dict(color="#8C3A2C", width=1, dash="dot"), annotation_text="Overbought (70)")
+        fig.add_hline(y=30, line=dict(color="#4C6B48", width=1, dash="dot"), annotation_text="Oversold (30)")
+        fig.update_yaxes(range=[0, 100], title=dict(text="RSI", font=AXIS_TITLE_FONT))
+        title = f"{metal} — Relative Strength Index (RSI)"
+
+    elif indicator == "MACD":
+        fig.add_trace(go.Scatter(x=history.index, y=history["MACD"], mode="lines",
+                                  name="MACD", line=dict(color="#4C6B48", width=2)))
+        fig.add_trace(go.Scatter(x=history.index, y=history["MACD_SIGNAL"], mode="lines",
+                                  name="Signal", line=dict(color="#B8892E", width=2, dash="dash")))
+        hist = history["MACD"] - history["MACD_SIGNAL"]
+        bar_colors = ["#4C6B48" if v >= 0 else "#8C3A2C" for v in hist]
+        fig.add_trace(go.Bar(x=history.index, y=hist, name="Histogram",
+                              marker=dict(color=bar_colors, opacity=0.4)))
+        fig.update_yaxes(title=dict(text="MACD", font=AXIS_TITLE_FONT))
+        title = f"{metal} — MACD"
+
+    elif indicator == "SMA":
+        fig.add_trace(go.Scatter(x=history.index, y=history["Close"] * CURRENCIES[currency], mode="lines",
+                                  name="Close", line=dict(color="#2E271F", width=2)))
+        fig.add_trace(go.Scatter(x=history.index, y=history["SMA_5"] * CURRENCIES[currency], mode="lines",
+                                  name="SMA 5", line=dict(color="#B8892E", width=1.4)))
+        fig.add_trace(go.Scatter(x=history.index, y=history["SMA_20"] * CURRENCIES[currency], mode="lines",
+                                  name="SMA 20", line=dict(color="#A08B63", width=1.4)))
+        fig.add_trace(go.Scatter(x=history.index, y=history["SMA_50"] * CURRENCIES[currency], mode="lines",
+                                  name="SMA 50", line=dict(color="#5C4A32", width=1.4)))
+        fig.update_yaxes(title=dict(text="Price", font=AXIS_TITLE_FONT))
+        title = f"{metal} — Moving Averages"
+
+    else:  # Volatility
+        fig.add_trace(go.Scatter(x=history.index, y=history["Volatility"] * 100, mode="lines",
+                                  name="Volatility", line=dict(color="#8C3A2C", width=2),
+                                  fill="tozeroy", fillcolor="rgba(140,58,44,0.12)"))
+        fig.update_yaxes(title=dict(text="10D Rolling Volatility (%)", font=AXIS_TITLE_FONT))
+        title = f"{metal} — Volatility"
+
+    fig.update_layout(
+        height=340,
+        margin=dict(l=55, r=30, t=60, b=10),
+        showlegend=True,
+        legend=dict(orientation="h", x=0, y=1.12, font=dict(size=11, color="#2E2013")),
+        title=dict(text=title, font=dict(size=15, color="#241B0F", family="'Playfair Display', Georgia, serif")),
+        **CHART_TEMPLATE,
+    )
+    fig.update_xaxes(showgrid=False, tickfont=AXIS_TICK_FONT, linecolor="#8C7A54")
+    fig.update_yaxes(showgrid=True, gridcolor="#EFE4CD", tickfont=AXIS_TICK_FONT)
+    return fig
+
+
+def create_prediction_history_chart(metal, prediction_history, currency, window_days=90):
+    """Predicted vs Actual price on the held-out test window."""
+    df = prediction_history[metal].tail(window_days).copy()
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=df["Date"], y=df["Actual"] * CURRENCIES[currency], mode="lines",
+                              name="Actual", line=dict(color="#2E271F", width=2)))
+    fig.add_trace(go.Scatter(x=df["Date"], y=df["Predicted"] * CURRENCIES[currency], mode="lines",
+                              name="Predicted", line=dict(color="#4C6B48", width=2, dash="dash")))
+    fig.update_layout(
+        height=360,
+        margin=dict(l=55, r=30, t=60, b=10),
+        showlegend=True,
+        legend=dict(orientation="h", x=0, y=1.12, font=dict(size=11, color="#2E2013")),
+        title=dict(text=f"{metal} — Predicted vs Actual (Held-out Test Window)",
+                   font=dict(size=15, color="#241B0F", family="'Playfair Display', Georgia, serif")),
+        **CHART_TEMPLATE,
+    )
+    fig.update_xaxes(showgrid=False, tickfont=AXIS_TICK_FONT, linecolor="#8C7A54")
+    fig.update_yaxes(showgrid=True, gridcolor="#EFE4CD", title=dict(text="Price", font=AXIS_TITLE_FONT), tickfont=AXIS_TICK_FONT)
+    return fig
+
+
 # ==========================================================
 # DASHBOARD METRICS
 # ==========================================================
@@ -998,6 +1224,125 @@ def signal_reasoning(metal, stats, featured_data, performance, forecast_days):
     return reasons
 
 
+# ==========================================================
+# AI MARKET PULSE  (Bullish / Neutral / Bearish + reasons)
+# ==========================================================
+
+def compute_market_pulse(metal, featured_data, performance, expected_return):
+    """
+    Combines RSI, MACD crossover, moving-average trend, recent volatility,
+    and the model's directional accuracy into a single Bullish / Neutral /
+    Bearish read, with a 0-100 score and plain-language reasons.
+    """
+    df = featured_data[metal]
+    rsi = df["RSI"].iloc[-1]
+    macd = df["MACD"].iloc[-1]
+    macd_signal = df["MACD_SIGNAL"].iloc[-1]
+    sma_20 = df["SMA_20"].iloc[-1]
+    sma_50 = df["SMA_50"].iloc[-1]
+    close = df["Close"].iloc[-1]
+    dir_acc = performance[metal]["Directional Accuracy %"]
+
+    score = 50.0
+    reasons = []
+
+    if expected_return > 0.5:
+        score += 15
+        reasons.append(f"Forecast return is positive at {expected_return:+.2f}%.")
+    elif expected_return < -0.5:
+        score -= 15
+        reasons.append(f"Forecast return is negative at {expected_return:+.2f}%.")
+    else:
+        reasons.append(f"Forecast return is roughly flat at {expected_return:+.2f}%.")
+
+    if macd > macd_signal:
+        score += 10
+        reasons.append("MACD sits above its signal line — bullish momentum.")
+    else:
+        score -= 10
+        reasons.append("MACD sits below its signal line — bearish momentum.")
+
+    if rsi >= 70:
+        score -= 8
+        reasons.append(f"RSI at {rsi:.0f} signals overbought conditions.")
+    elif rsi <= 30:
+        score += 8
+        reasons.append(f"RSI at {rsi:.0f} signals oversold conditions, room to recover.")
+    else:
+        reasons.append(f"RSI at {rsi:.0f} is in neutral territory.")
+
+    if close > sma_20 > sma_50:
+        score += 12
+        reasons.append("Price is trading above both the 20D and 50D averages — uptrend intact.")
+    elif close < sma_20 < sma_50:
+        score -= 12
+        reasons.append("Price is trading below both the 20D and 50D averages — downtrend intact.")
+    else:
+        reasons.append("Price is mixed relative to its 20D/50D averages — no clear trend.")
+
+    if dir_acc >= 55:
+        score += 5
+        reasons.append(f"Model's historical directional accuracy ({dir_acc:.1f}%) supports the read.")
+    else:
+        reasons.append(f"Model's historical directional accuracy ({dir_acc:.1f}%) is modest — treat with caution.")
+
+    score = max(0, min(100, score))
+
+    if score >= 62:
+        label = "Bullish"
+    elif score <= 38:
+        label = "Bearish"
+    else:
+        label = "Neutral"
+
+    return {"label": label, "score": round(score, 1), "reasons": reasons}
+
+
+def pulse_css_class(label):
+    return {"Bullish": "pulse-bullish", "Neutral": "pulse-neutral", "Bearish": "pulse-bearish"}[label]
+
+
+def pulse_bar_color(label):
+    return {"Bullish": "#4C6B48", "Neutral": "#B8892E", "Bearish": "#A6493A"}[label]
+
+
+def render_market_pulse_card(metal, pulse):
+    css_class = pulse_css_class(pulse["label"])
+    bar_color = pulse_bar_color(pulse["label"])
+    reasons_html = "".join(f"<li>{r}</li>" for r in pulse["reasons"])
+    st.markdown(
+        f"""
+        <div class="metric-card" style="text-align:left;">
+            <h4 style="text-align:center;">{metal} — AI Market Pulse</h4>
+            <div style="text-align:center;">
+                <span class="pulse-badge {css_class}">{pulse['label']}</span>
+            </div>
+            <div class="pulse-score-wrap">
+                <div class="pulse-score-fill" style="background:{bar_color}; --target-width:{pulse['score']}%;"></div>
+            </div>
+            <div style="text-align:center;font-size:12px;color:#8C7A54;margin-top:4px;">Pulse score: <b>{pulse['score']}</b> / 100</div>
+            <ul class="pulse-reason-list">{reasons_html}</ul>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def market_brief_text(gold_pulse, silver_pulse, news_mood=None):
+    """Short combined narrative brief across both metals."""
+    lines = [
+        f"**Gold** is reading **{gold_pulse['label']}** (score {gold_pulse['score']}/100), "
+        f"while **Silver** is reading **{silver_pulse['label']}** (score {silver_pulse['score']}/100).",
+    ]
+    if gold_pulse["label"] == silver_pulse["label"]:
+        lines.append(f"Both metals are aligned in a {gold_pulse['label'].lower()} posture right now.")
+    else:
+        lines.append("The two metals are currently diverging, which can be a cue to size positions independently rather than treating them as one trade.")
+    if news_mood:
+        lines.append(f"Recent headline sentiment leans **{news_mood}**.")
+    return "\n\n".join(lines)
+
+
 def metric_card(title, value):
     st.markdown(
         f"""<div class="metric-card"><h4>{title}</h4><h2>{value}</h2></div>""",
@@ -1112,20 +1457,34 @@ def get_live_24h_change(symbol):
 def render_live_banner(currency):
     market = get_live_market()
 
-    def fmt(usd_price):
-        if isinstance(usd_price, str):
-            return usd_price
-        return f"{round(usd_price * CURRENCIES[currency], 2)}"
+    # Track previous values in session state so we can flash green/red only
+    # when the price actually moves between refreshes.
+    prev = st.session_state.get("_prev_live_market", {})
 
-    gold_display = fmt(market["Gold"])
-    silver_display = fmt(market["Silver"])
+    def fmt_with_flash(label, usd_price):
+        if isinstance(usd_price, str):
+            return usd_price, ""
+        display = f"{round(usd_price * CURRENCIES[currency], 2)}"
+        prev_val = prev.get(label)
+        flash_class = ""
+        if prev_val is not None and not isinstance(prev_val, str):
+            if usd_price > prev_val:
+                flash_class = "flash-up"
+            elif usd_price < prev_val:
+                flash_class = "flash-down"
+        return display, flash_class
+
+    gold_display, gold_flash = fmt_with_flash("Gold", market["Gold"])
+    silver_display, silver_flash = fmt_with_flash("Silver", market["Silver"])
+
+    st.session_state["_prev_live_market"] = {"Gold": market["Gold"], "Silver": market["Silver"]}
 
     st.markdown(
         f"""
         <div class="live-banner">
             <span class="live-dot"></span>
-            <div class="live-item"><div class="live-label">Gold</div><div class="live-value" style="color:#B8892E;">{currency} {gold_display}</div></div>
-            <div class="live-item"><div class="live-label">Silver</div><div class="live-value" style="color:#6B7280;">{currency} {silver_display}</div></div>
+            <div class="live-item"><div class="live-label">Gold</div><div class="live-value {gold_flash}" style="color:#B8892E;">{currency} {gold_display}</div></div>
+            <div class="live-item"><div class="live-label">Silver</div><div class="live-value {silver_flash}" style="color:#6B7280;">{currency} {silver_display}</div></div>
             <div class="live-item"><div class="live-label">USD/INR</div><div class="live-value" style="color:#3B6FA0;">{market['USDINR']} <small style="color:#8C7A54;font-weight:400;">(static)</small></div></div>
             <div class="live-item"><div class="live-label">Updated</div><div class="live-value">{market['Time']}</div></div>
         </div>
@@ -1294,6 +1653,34 @@ def compare_metals(currency, models, featured_data, performance):
     })
 
 
+def create_comparison_chart(currency, models, featured_data, performance):
+    gold = dashboard_metrics("Gold", currency, models, featured_data, performance)
+    silver = dashboard_metrics("Silver", currency, models, featured_data, performance)
+
+    fig = go.Figure()
+    fig.add_trace(go.Bar(
+        x=["Expected Return %", "Confidence %"],
+        y=[gold["Expected Return"], gold["Confidence"]],
+        name="Gold", marker_color="#B8892E",
+    ))
+    fig.add_trace(go.Bar(
+        x=["Expected Return %", "Confidence %"],
+        y=[silver["Expected Return"], silver["Confidence"]],
+        name="Silver", marker_color="#6B7280",
+    ))
+    fig.update_layout(
+        barmode="group",
+        height=380,
+        margin=dict(l=40, r=20, t=50, b=10),
+        title=dict(text="Gold vs Silver — Head to Head", font=dict(size=16, color="#241B0F", family="'Playfair Display', Georgia, serif")),
+        legend=dict(orientation="h", x=0, y=1.12, font=dict(size=12, color="#2E2013")),
+        **CHART_TEMPLATE,
+    )
+    fig.update_xaxes(showgrid=False, tickfont=AXIS_TICK_FONT)
+    fig.update_yaxes(showgrid=True, gridcolor="#EFE4CD", tickfont=AXIS_TICK_FONT)
+    return fig
+
+
 def portfolio_optimizer(investment, currency, models, featured_data, performance):
     gold = dashboard_metrics("Gold", currency, models, featured_data, performance)
     silver = dashboard_metrics("Silver", currency, models, featured_data, performance)
@@ -1313,19 +1700,33 @@ def portfolio_optimizer(investment, currency, models, featured_data, performance
     })
 
 
-def check_price_alert(metal, target_price, currency, models, featured_data, performance):
+def check_price_alert(metal, target_price, currency, models, featured_data, performance, direction="Above"):
     m = dashboard_metrics(metal, currency, models, featured_data, performance)
     current_price = m["Current Price"]
     diff = current_price - target_price
+    distance_pct = (diff / target_price) * 100 if target_price else 0.0
 
-    if current_price >= target_price:
-        status, message = "ALERT TRIGGERED", f"{metal} has reached or crossed your target price."
+    if direction == "Above":
+        triggered = current_price >= target_price
+        message = (
+            f"{metal} has reached or crossed above your target price."
+            if triggered else
+            f"{metal} is still {abs(distance_pct):.2f}% below your target price."
+        )
     else:
-        status, message = "ALERT NOT TRIGGERED", f"{metal} is still below your target price."
+        triggered = current_price <= target_price
+        message = (
+            f"{metal} has reached or dropped below your target price."
+            if triggered else
+            f"{metal} is still {abs(distance_pct):.2f}% above your target price."
+        )
+
+    status = "ALERT TRIGGERED" if triggered else "ALERT NOT TRIGGERED"
 
     return pd.DataFrame({
         "Metal": [metal], "Current Price": [round(current_price, 2)],
-        "Target Price": [round(target_price, 2)], "Difference": [round(diff, 2)],
+        "Target Price": [round(target_price, 2)], "Direction": [direction],
+        "Difference": [round(diff, 2)], "Distance %": [round(distance_pct, 2)],
         "Status": [status], "Message": [message],
     })
 
@@ -1343,6 +1744,33 @@ def strategy_backtest(metal, investment, featured_data):
         "Investment": [investment], "Initial Price": [round(initial_price, 2)],
         "Latest Price": [round(latest_price, 2)], "Units Purchased": [round(units, 4)],
         "Final Value": [round(final_value, 2)], "Profit": [round(profit, 2)], "ROI %": [round(roi, 2)],
+    })
+
+
+def scenario_simulation(metal, investment, price_change_pct, currency, models, featured_data, performance):
+    """
+    Lets the user override the model's forecast with a hypothetical price
+    move (e.g. "what if Gold rises 10%?") and see the resulting position
+    value. This is a manual what-if tool, independent of the ML forecast.
+    """
+    m = dashboard_metrics(metal, currency, models, featured_data, performance)
+    current_price = m["Current Price"]
+    scenario_price = current_price * (1 + price_change_pct / 100)
+    units = investment / current_price
+    scenario_value = units * scenario_price
+    profit = scenario_value - investment
+    roi = (profit / investment) * 100 if investment else 0.0
+
+    return pd.DataFrame({
+        "Metal": [metal],
+        "Scenario Price Change %": [price_change_pct],
+        "Investment": [round(investment, 2)],
+        "Current Price": [round(current_price, 2)],
+        "Scenario Price": [round(scenario_price, 2)],
+        "Units Held": [round(units, 6)],
+        "Scenario Value": [round(scenario_value, 2)],
+        "Profit / Loss": [round(profit, 2)],
+        "ROI %": [round(roi, 2)],
     })
 
 
@@ -1471,10 +1899,13 @@ render_live_section(live_currency)
 with st.spinner("Loading market data and training models..."):
     market_data = load_market_data()
     featured_data = build_featured_data(market_data)
-    models, performance, performance_df, feature_importance = train_all_models()
+    models, performance, performance_df, feature_importance, prediction_history = train_all_models()
 
-tab_forecast, tab_advisor, tab_news, tab_reports, tab_analytics, tab_about = st.tabs(
-    ["Forecast", "Advisor", "Market News", "Reports", "Analytics", "About"]
+(
+    tab_forecast, tab_pulse, tab_advisor, tab_comparison,
+    tab_news, tab_reports, tab_analytics, tab_about,
+) = st.tabs(
+    ["Forecast", "Market Pulse", "Advisor", "Comparison", "Market News", "Reports", "Analytics", "About"]
 )
 
 # ---------------- FORECAST TAB ----------------
@@ -1533,7 +1964,7 @@ with tab_forecast:
             f"""<div class="metric-card accent-info"><h4>Confidence
             <span class="info-tooltip">i<span class="tooltip-text">{confidence_tooltip}</span></span></h4>
             <h2>{stats['Confidence']}%</h2>
-            <div class="confidence-bar-wrap"><div class="confidence-bar-fill" style="width:{min(stats['Confidence'], 100)}%; background:{conf_bar_color};"></div></div>
+            <div class="confidence-bar-wrap"><div class="confidence-bar-fill" style="--target-width:{min(stats['Confidence'], 100)}%; background:{conf_bar_color};"></div></div>
             <div class="confidence-tier-label" style="color:{conf_text_color}; background:{conf_bar_color}22;">{conf_label} Confidence</div>
             <div class="accuracy-note">Model accuracy: <b>{dir_acc:.1f}%</b></div></div>""",
             unsafe_allow_html=True,
@@ -1550,7 +1981,9 @@ with tab_forecast:
             st.markdown(f"- {reason}")
 
     st.markdown('<div class="chart-spacer"></div>', unsafe_allow_html=True)
+    st.markdown('<div class="chart-reveal">', unsafe_allow_html=True)
     st.plotly_chart(create_forecast_chart(metal, forecast, featured_data, currency), use_container_width=True)
+    st.markdown('</div>', unsafe_allow_html=True)
     st.caption(
         "Drag the range slider or use the buttons above the chart to zoom into a time period. "
         "The shaded green band around the forecast is an approximate 80% confidence range "
@@ -1580,6 +2013,41 @@ with tab_forecast:
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             )
 
+# ---------------- MARKET PULSE TAB ----------------
+with tab_pulse:
+    st.subheader("AI Market Pulse")
+    st.caption(
+        "A rules-based read combining the model's forecast, RSI, MACD crossover, "
+        "moving-average trend, and historical directional accuracy into a single "
+        "Bullish / Neutral / Bearish score for each metal."
+    )
+
+    pulse_currency = st.selectbox("Currency", list(CURRENCIES.keys()), index=0, key="pulse_currency")
+
+    gold_stats_p = dashboard_metrics("Gold", pulse_currency, models, featured_data, performance)
+    silver_stats_p = dashboard_metrics("Silver", pulse_currency, models, featured_data, performance)
+    gold_pulse = compute_market_pulse("Gold", featured_data, performance, gold_stats_p["Expected Return"])
+    silver_pulse = compute_market_pulse("Silver", featured_data, performance, silver_stats_p["Expected Return"])
+
+    pc1, pc2 = st.columns(2)
+    with pc1:
+        render_market_pulse_card("Gold", gold_pulse)
+    with pc2:
+        render_market_pulse_card("Silver", silver_pulse)
+
+    st.markdown("### Market Brief")
+    include_news = st.checkbox("Include latest news sentiment in the brief", value=False, key="pulse_include_news")
+    news_mood = None
+    if include_news:
+        with st.spinner("Fetching recent headlines..."):
+            news_g = analyze_news_sentiment(fetch_market_news("Gold", limit=8))
+            news_s = analyze_news_sentiment(fetch_market_news("Silver", limit=8))
+            combined_news = pd.concat([news_g, news_s], ignore_index=True)
+            if "Sentiment" in combined_news.columns and len(combined_news):
+                news_mood = market_mood(combined_news).lower()
+
+    st.markdown(market_brief_text(gold_pulse, silver_pulse, news_mood))
+
 # ---------------- ADVISOR TAB ----------------
 with tab_advisor:
     st.subheader("Investment Advisor")
@@ -1593,18 +2061,69 @@ with tab_advisor:
         st.markdown(ai_investment_advisor(advisor_amount, advisor_currency, models, featured_data, performance))
 
     st.markdown("---")
-    st.subheader("Price Alert")
-    al1, al2, al3 = st.columns(3)
+    st.subheader("Smart Price Alert")
+    al1, al2, al3, al4 = st.columns(4)
     with al1:
         alert_metal = st.selectbox("Metal", ["Gold", "Silver"], key="alert_metal")
     with al2:
         alert_target = st.number_input("Target Price", value=350000, key="alert_target")
     with al3:
         alert_currency = st.selectbox("Currency", list(CURRENCIES.keys()), index=list(CURRENCIES.keys()).index("INR"), key="alert_currency")
+    with al4:
+        alert_direction = st.radio("Trigger When", ["Above", "Below"], key="alert_direction", horizontal=True)
 
     if st.button("Check Alert"):
-        table = check_price_alert(alert_metal, alert_target, alert_currency, models, featured_data, performance)
-        st.dataframe(table, use_container_width=True)
+        table = check_price_alert(alert_metal, alert_target, alert_currency, models, featured_data, performance, alert_direction)
+        st.dataframe(table, use_container_width=True, hide_index=True)
+        row = table.iloc[0]
+        if row["Status"] == "ALERT TRIGGERED":
+            st.success(row["Message"])
+        else:
+            st.info(row["Message"])
+
+    st.markdown("---")
+    st.subheader("Scenario Simulator")
+    st.caption("A manual what-if tool — override the model forecast with your own hypothetical price move.")
+    sc1, sc2, sc3 = st.columns(3)
+    with sc1:
+        scenario_metal = st.selectbox("Metal", ["Gold", "Silver"], key="scenario_metal")
+    with sc2:
+        scenario_investment = st.number_input("Investment Amount", value=100000, key="scenario_investment")
+    with sc3:
+        scenario_currency = st.selectbox("Currency", list(CURRENCIES.keys()), index=list(CURRENCIES.keys()).index("INR"), key="scenario_currency")
+
+    scenario_change = st.slider("Hypothetical Price Change (%)", min_value=-30, max_value=30, value=10, step=1, key="scenario_change")
+
+    scenario_df = scenario_simulation(
+        scenario_metal, scenario_investment, scenario_change, scenario_currency, models, featured_data, performance
+    )
+    row = scenario_df.iloc[0]
+    roi_color = "#385B34" if row["ROI %"] >= 0 else "#8C3A2C"
+    st.markdown(
+        f"""<div class="scenario-readout">
+        If {scenario_metal} moves <b>{scenario_change:+d}%</b> from {scenario_currency} {row['Current Price']:,.2f} to
+        {scenario_currency} {row['Scenario Price']:,.2f}, a {scenario_currency} {scenario_investment:,.2f} position
+        would be worth <span class="scenario-value">{scenario_currency} {row['Scenario Value']:,.2f}</span>,
+        a <span class="scenario-value" style="color:{roi_color};">{row['ROI %']:+.2f}%</span> return.
+        </div>""",
+        unsafe_allow_html=True,
+    )
+    st.dataframe(scenario_df, use_container_width=True, hide_index=True)
+
+# ---------------- COMPARISON TAB ----------------
+with tab_comparison:
+    st.subheader("Gold vs Silver Comparison")
+    comparison_currency = st.selectbox("Currency", list(CURRENCIES.keys()), index=0, key="comparison_currency")
+
+    comparison_table = compare_metals(comparison_currency, models, featured_data, performance)
+    st.dataframe(comparison_table, use_container_width=True, hide_index=True)
+    st.plotly_chart(create_comparison_chart(comparison_currency, models, featured_data, performance), use_container_width=True)
+
+    st.markdown("### Suggested Allocation")
+    st.caption("Weights expected-return-positive metals proportionally; splits evenly if both are non-positive.")
+    portfolio_amount = st.number_input("Total Investment", value=100000, key="portfolio_amount")
+    allocation_table = portfolio_optimizer(portfolio_amount, comparison_currency, models, featured_data, performance)
+    st.dataframe(allocation_table, use_container_width=True, hide_index=True)
 
 # ---------------- NEWS TAB ----------------
 with tab_news:
@@ -1685,6 +2204,39 @@ with tab_analytics:
         st.markdown("**Strategy Backtest**")
         st.dataframe(table, use_container_width=True, hide_index=True)
 
+    st.markdown("---")
+    st.subheader("Technical Indicators")
+    ti1, ti2 = st.columns(2)
+    with ti1:
+        ti_metal = st.selectbox("Metal", ["Gold", "Silver"], key="ti_metal")
+    with ti2:
+        ti_currency = st.selectbox("Currency", list(CURRENCIES.keys()), index=0, key="ti_currency")
+
+    ti_tab_sma, ti_tab_rsi, ti_tab_macd, ti_tab_vol = st.tabs(["Moving Averages", "RSI", "MACD", "Volatility"])
+    with ti_tab_sma:
+        st.markdown('<div class="chart-reveal">', unsafe_allow_html=True)
+        st.plotly_chart(create_technical_chart(ti_metal, featured_data, "SMA", ti_currency), use_container_width=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+    with ti_tab_rsi:
+        st.markdown('<div class="chart-reveal">', unsafe_allow_html=True)
+        st.plotly_chart(create_technical_chart(ti_metal, featured_data, "RSI", ti_currency), use_container_width=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+    with ti_tab_macd:
+        st.markdown('<div class="chart-reveal">', unsafe_allow_html=True)
+        st.plotly_chart(create_technical_chart(ti_metal, featured_data, "MACD", ti_currency), use_container_width=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+    with ti_tab_vol:
+        st.markdown('<div class="chart-reveal">', unsafe_allow_html=True)
+        st.plotly_chart(create_technical_chart(ti_metal, featured_data, "Volatility", ti_currency), use_container_width=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    st.markdown("---")
+    st.subheader("Prediction History — Predicted vs Actual")
+    st.caption("Shows the model's predictions against actual prices on the held-out test window (not seen during training).")
+    ph_metal = st.selectbox("Metal", ["Gold", "Silver"], key="ph_metal")
+    ph_currency = st.selectbox("Currency", list(CURRENCIES.keys()), index=0, key="ph_currency")
+    st.plotly_chart(create_prediction_history_chart(ph_metal, prediction_history, ph_currency), use_container_width=True)
+
 # ---------------- ABOUT TAB ----------------
 with tab_about:
     st.markdown(f"""
@@ -1701,6 +2253,8 @@ those forecasts into readable prices, trading signals, and investment tools.
 - **Walk-forward cross-validation** and a **directional accuracy** metric are reported alongside R2.
 - The forecast loop runs in O(n), recomputing only a trailing indicator window at each step.
 - FX conversion uses a clearly labeled static rate table rather than a live feed.
+- **AI Market Pulse** blends forecast direction, RSI, MACD crossover, moving-average trend, and directional accuracy into a Bullish/Neutral/Bearish read — it is a rules-based heuristic, not a separate ML model.
+- **Prediction History** shows predicted vs actual prices on the held-out test window used to compute the reported performance metrics.
 
 ### Built Using
 Python, Streamlit, Plotly, Scikit-learn, Pandas, NumPy, ReportLab
