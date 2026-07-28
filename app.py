@@ -72,6 +72,44 @@ st.set_page_config(
 
 
 
+
+
+# ============================================================
+# CLEAN START V4
+# No cinematic doorway / splash screen. The application opens
+# immediately into the existing market dashboard/Home experience.
+# ============================================================
+st.markdown("""
+<style>
+/* Ensure no legacy intro overlay can cover or fade the dashboard. */
+#pm-intro,
+.cinematic-intro,
+.intro-overlay,
+.door-overlay,
+.doorway-overlay {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+/* Defensive reset against the old washed-out animation state. */
+.stApp,
+[data-testid="stAppViewContainer"],
+[data-testid="stMain"],
+.main,
+.block-container {
+    opacity: 1 !important;
+    filter: none !important;
+}
+
+/* Keep the first screen clean and immediately usable. */
+html {
+    scroll-behavior: smooth;
+}
+</style>
+""", unsafe_allow_html=True)
+
 # ============================================================
 # V3 CINEMATIC INTRO — DATA -> METAL TRANSFORMATION
 # Replaces the old doorway transition with a continuous:
@@ -295,9 +333,7 @@ def render_data_to_metal_intro():
     # Streamlit reruns can otherwise replay an intro endlessly. Mark it seen
     # for this browser session after the component is mounted.
     st.session_state["_data_metal_intro_seen"] = True
-
-
-render_data_to_metal_intro()
+# Cinematic intro disabled: app now opens directly on the Home/dashboard experience.
 # ==========================================================
 # STYLING (cream and gold luxury theme, no emojis)
 # ==========================================================
