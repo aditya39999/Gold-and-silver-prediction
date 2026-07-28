@@ -74,6 +74,59 @@ st.set_page_config(
 
 
 
+
+
+# ============================================================
+# V5 — INTRO COMPLETELY REMOVED
+# ============================================================
+st.markdown("""
+<style>
+/* Kill all legacy intro/door/splash layers. */
+#pm-intro,
+.cinematic-intro,
+.intro-overlay,
+.intro-screen,
+.splash-screen,
+.door-overlay,
+.doorway-overlay,
+[class*="cinematic-intro"],
+[class*="doorway"],
+[class*="intro-overlay"] {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    width: 0 !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    max-height: 0 !important;
+    overflow: hidden !important;
+    pointer-events: none !important;
+}
+
+/* Remove iframe/component shells left by the custom cinematic intro. */
+iframe[title="streamlit_components.v1.html"] {
+    min-height: 0;
+}
+
+/* Never allow old animation state to fade the actual application. */
+.stApp,
+[data-testid="stAppViewContainer"],
+[data-testid="stMain"],
+[data-testid="stMainBlockContainer"],
+.main,
+.block-container {
+    opacity: 1 !important;
+    filter: none !important;
+    visibility: visible !important;
+}
+
+/* No blank top space from an intro placeholder. */
+[data-testid="stMainBlockContainer"] {
+    padding-top: 1.5rem !important;
+}
+</style>
+""", unsafe_allow_html=True)
+
 # ============================================================
 # CLEAN START V4
 # No cinematic doorway / splash screen. The application opens
@@ -125,7 +178,7 @@ def render_data_to_metal_intro():
     <div id="pm-intro">
       <canvas id="pm-canvas"></canvas>
 
-      <button id="pm-skip" aria-label="Skip intro">Skip Intro</button>
+      <button id="pm-skip" aria-label="Skip intro"></button>
 
       <div class="pm-noise" id="pm-noise">
         <span style="--x:8%;--y:18%;--d:0s">4047.32</span>
