@@ -275,12 +275,45 @@ h1, h2, h3, .app-header h1 {
     font-size: 12px;
     font-weight: 600;
     color: #6B5D46;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin: 8px 0 2px 0;
+}
+.ticker-label-left {
     display: flex;
     align-items: center;
     gap: 6px;
-    margin: 8px 0 2px 0;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+.ticker-label-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.ticker-change {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 2px 9px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+}
+.ticker-change.trend-up { background: rgba(76,107,72,0.14); color: #385B34; }
+.ticker-change.trend-down { background: rgba(166,73,58,0.14); color: #8C3A2C; }
+.ticker-change.trend-flat { background: rgba(140,122,84,0.14); color: #6B5D46; }
+.ticker-window {
+    font-size: 10px;
+    font-weight: 700;
+    color: #8C7A54;
+    background: rgba(140,122,84,0.12);
+    padding: 2px 8px;
+    border-radius: 999px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
 
 .disclaimer {
@@ -692,25 +725,39 @@ def create_forecast_chart(metal, forecast, featured_data, currency):
         marker=dict(size=12, color="#4C6B48", symbol="star")
     ))
 
+    default_window_days = 90
+    visible_history = history.tail(default_window_days)
+    visible_low = min(visible_history["Close"].min(), float(np.min(lower))) * CURRENCIES[currency]
+    visible_high = max(visible_history["Close"].max(), float(np.max(upper))) * CURRENCIES[currency]
+    y_pad = (visible_high - visible_low) * 0.08 or visible_high * 0.01
+    default_y_range = [visible_low - y_pad, visible_high + y_pad]
+
     fig.update_layout(
-        title=dict(
-            text=f"{metal} Price: History &amp; Forecast",
-            font=dict(color="#241B0F", size=19, family="'Playfair Display', Georgia, serif"),
-        ),
-        hovermode="x unified", height=430,
+        height=560,
+        hovermode="x unified",
+        margin=dict(l=55, r=30, t=170, b=10),
+        showlegend=True,
         legend=dict(
-            orientation="h", y=1.12, x=0,
+            orientation="h", x=0, xanchor="left", y=1.02, yanchor="bottom",
             font=dict(color="#2E2013", size=12, family="Georgia, serif"),
             bgcolor="rgba(255,253,247,0.9)",
         ),
-        margin=dict(l=50, r=30, t=70, b=10),
+        annotations=[
+            dict(
+                text=f"<b>{metal} Price: History &amp; Forecast</b>",
+                xref="paper", yref="paper",
+                x=0, xanchor="left", y=1.34, yanchor="bottom",
+                showarrow=False,
+                font=dict(color="#241B0F", size=19, family="'Playfair Display', Georgia, serif"),
+            )
+        ],
         **CHART_TEMPLATE,
     )
     fig.update_xaxes(
         showgrid=False,
         tickfont=AXIS_TICK_FONT,
         linecolor="#8C7A54",
-        rangeslider=dict(visible=True, thickness=0.06, bgcolor="#EFE4CD"),
+        rangeslider=dict(visible=True, thickness=0.05, bgcolor="#EFE4CD"),
         rangeselector=dict(
             buttons=[
                 dict(count=7, label="7D", step="day", stepmode="backward"),
@@ -725,15 +772,16 @@ def create_forecast_chart(metal, forecast, featured_data, currency):
             bordercolor="#B8892E",
             borderwidth=1,
             font=dict(color="#241B0F", size=12, family="Georgia, serif"),
-            y=1.1,
+            x=0, xanchor="left", y=1.18, yanchor="bottom",
         ),
         # Default view: recent history through the end of the forecast horizon
-        range=[history.index[-90], forecast["Date"].iloc[-1]],
+        range=[history.index[-default_window_days], forecast["Date"].iloc[-1]],
     )
     fig.update_yaxes(
         showgrid=True, gridcolor="#EFE4CD",
         title=dict(text="Price", font=AXIS_TITLE_FONT),
         tickfont=AXIS_TICK_FONT,
+        range=default_y_range,
     )
 
     return fig
@@ -954,6 +1002,19 @@ def create_ticker_sparkline(series, currency, line_color, fill_color):
     return fig
 
 
+@st.cache_data(ttl=30, show_spinner=False)
+def get_live_24h_change(symbol):
+    """Previous close vs latest close, used to label the live ticker charts."""
+    try:
+        closes = yf.Ticker(symbol).history(period="5d", interval="1d")["Close"].dropna()
+        if len(closes) < 2:
+            return None
+        prev, last = float(closes.iloc[-2]), float(closes.iloc[-1])
+        return ((last - prev) / prev) * 100
+    except Exception:
+        return None
+
+
 def render_live_banner(currency):
     market = get_live_market()
 
@@ -990,22 +1051,31 @@ def render_live_section(currency):
     render_live_banner(currency)
     gold_series = get_intraday_series(MARKET_SYMBOLS["Gold"])
     silver_series = get_intraday_series(MARKET_SYMBOLS["Silver"])
+    gold_change = get_live_24h_change(MARKET_SYMBOLS["Gold"])
+    silver_change = get_live_24h_change(MARKET_SYMBOLS["Silver"])
+
+    def ticker_header(label, change_pct):
+        if change_pct is None:
+            change_html = '<span class="ticker-change trend-flat">n/a</span>'
+        else:
+            arrow, trend_class = trend_arrow(change_pct)
+            change_html = f'<span class="ticker-change {trend_class}">{arrow} {change_pct:+.2f}%</span>'
+        return (
+            '<div class="ticker-label">'
+            f'<span class="ticker-label-left"><span class="live-dot"></span> {label} — Live</span>'
+            f'<span class="ticker-label-right">{change_html}<span class="ticker-window">24H</span></span>'
+            '</div>'
+        )
 
     t1, t2 = st.columns(2)
     with t1:
-        st.markdown(
-            '<div class="ticker-label"><span class="live-dot"></span> Gold — Live</div>',
-            unsafe_allow_html=True,
-        )
+        st.markdown(ticker_header("Gold", gold_change), unsafe_allow_html=True)
         st.plotly_chart(
             create_ticker_sparkline(gold_series, currency, "#B8892E", "rgba(184,137,46,0.15)"),
             use_container_width=True, config={"displayModeBar": False}, key="gold_spark",
         )
     with t2:
-        st.markdown(
-            '<div class="ticker-label"><span class="live-dot"></span> Silver — Live</div>',
-            unsafe_allow_html=True,
-        )
+        st.markdown(ticker_header("Silver", silver_change), unsafe_allow_html=True)
         st.plotly_chart(
             create_ticker_sparkline(silver_series, currency, "#6B7280", "rgba(107,114,128,0.15)"),
             use_container_width=True, config={"displayModeBar": False}, key="silver_spark",
