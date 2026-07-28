@@ -77,7 +77,9 @@ CUSTOM_CSS = """
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&display=swap');
 
-.block-container { padding-top: 2rem; max-width: 1400px; }
+.block-container { padding-top: 1rem; max-width: 1400px; }
+div[data-testid="stAppViewBlockContainer"] { padding-top: 1rem; }
+div[data-testid="stDecoration"] { display: none; }
 
 .stApp {
     background: #F7F1E4;
@@ -112,104 +114,207 @@ h1, h2, h3, .app-header h1 {
     font-size: 16px;
 }
 
-/* Markdown body text used for summaries and advisor output.
-   Headings are forced to an explicit color + transparent background so they
-   stay readable even if the surrounding theme (e.g. a dark browser/client
-   theme) would otherwise render a dark heading background with dark text. */
-.stMarkdown h1, .stMarkdown h2, .stMarkdown h3, .stMarkdown h4,
-[data-testid="stMarkdownContainer"] h1,
-[data-testid="stMarkdownContainer"] h2,
-[data-testid="stMarkdownContainer"] h3,
-[data-testid="stMarkdownContainer"] h4 {
-    color: #2E271F !important;
-    background: transparent !important;
-}
+/* Markdown body text used for summaries and advisor output */
 .stMarkdown h3 { font-size: 22px; }
 .stMarkdown ul, .stMarkdown li { font-size: 18px; }
 
-/* Tight wrapper used to pull the recommendation/summary text closer to the
-   chart above it (reduces the default Streamlit block gap). */
-.tight-block { margin-top: -18px; }
-.tight-block > div:first-child { margin-top: 0; }
-
-/* Small inline info icon with a native browser tooltip on hover. */
-.info-tip {
-    display: inline-block;
-    margin-left: 6px;
-    font-size: 13px;
-    font-weight: 700;
-    color: #8C6A2E;
-    border: 1px solid #B8892E;
-    border-radius: 50%;
-    width: 16px;
-    height: 16px;
-    line-height: 15px;
-    text-align: center;
-    cursor: help;
-    background: #FFFDF7;
-    vertical-align: middle;
-}
-
 .app-header {
-    padding: 34px 36px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px 24px;
+    padding: 14px 22px;
     border-radius: 4px;
-    margin-bottom: 22px;
+    margin-bottom: 14px;
     background: linear-gradient(120deg, #EFE4CD, #F7F1E4 60%, #EFE4CD);
     border: 1px solid rgba(184,137,46,0.35);
-    text-align: center;
 }
+.app-header .title-block { text-align: left; }
 .app-header h1 {
     margin: 0;
-    font-size: 34px;
+    font-size: 22px;
     font-weight: 600;
-    letter-spacing: 0.12em;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
     color: #8C6A2E;
+    line-height: 1.2;
 }
 .app-header p {
     color: #6B5D46;
-    margin-top: 10px;
-    font-size: 16px;
+    margin: 2px 0 0 0;
+    font-size: 13px;
     font-style: italic;
     letter-spacing: 0.02em;
 }
 
 .metric-card {
     background: #FFFDF7;
-    padding: 20px 16px;
-    border-radius: 4px;
-    border: 1px solid rgba(184,137,46,0.3);
+    padding: 16px 14px 14px 14px;
+    border-radius: 6px;
+    border: 1px solid rgba(184,137,46,0.25);
+    border-top: 4px solid #B8892E;
     text-align: center;
+    box-shadow: 0 1px 3px rgba(46,39,31,0.06);
 }
+.metric-card.accent-neutral { border-top-color: #B8892E; }
+.metric-card.accent-good { border-top-color: #4C6B48; }
+.metric-card.accent-info { border-top-color: #3B6FA0; }
 .metric-card h4 {
-    color: #8C7A54;
-    font-weight: 600;
-    font-size: 14px;
+    color: #7A6B4E;
+    font-weight: 700;
+    font-size: 12px;
     margin: 0 0 8px 0;
     text-transform: uppercase;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.12em;
     font-family: 'Cormorant Garamond', Georgia, serif;
 }
 .metric-card h2 {
     margin: 0;
-    font-size: 30px;
+    font-size: 27px;
     font-weight: 700;
-    color: #2E271F;
+    color: #1F1811;
     font-family: 'Playfair Display', Georgia, serif;
 }
+.metric-card .metric-reason {
+    margin-top: 8px;
+    font-size: 12px;
+    color: #6B5D46;
+    line-height: 1.4;
+}
+
+/* Pill badge used for 24H change / expected return / model accuracy */
+.trend-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 9px;
+    padding: 4px 11px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 700;
+}
+.trend-pill.trend-up { background: rgba(76,107,72,0.14); color: #385B34; }
+.trend-pill.trend-down { background: rgba(166,73,58,0.14); color: #8C3A2C; }
+.trend-pill.trend-flat { background: rgba(140,122,84,0.14); color: #6B5D46; }
+
+/* Confidence progress bar, color-coded by tier */
+.confidence-bar-wrap {
+    margin-top: 10px;
+    height: 8px;
+    border-radius: 999px;
+    background: rgba(46,39,31,0.08);
+    overflow: hidden;
+}
+.confidence-bar-fill { height: 100%; border-radius: 999px; }
+.confidence-tier-label {
+    display: inline-block;
+    margin-top: 8px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+.accuracy-note {
+    margin-top: 6px;
+    font-size: 12px;
+    color: #8C7A54;
+}
+.accuracy-note b { color: #4A3F2E; }
+
+/* Recommendation shown as a solid colored badge instead of plain colored text,
+   so BUY / HOLD / SELL are unmistakable at a glance */
+.signal-badge {
+    display: inline-block;
+    margin-top: 4px;
+    padding: 9px 20px;
+    border-radius: 8px;
+    font-size: 20px;
+    font-weight: 700;
+    font-family: 'Playfair Display', Georgia, serif;
+    letter-spacing: 0.03em;
+}
+.signal-badge.signal-strong-buy { background: #33502F; color: #F7F1E4; }
+.signal-badge.signal-buy { background: #DCE8D8; color: #2E4A2A; border: 1px solid rgba(76,107,72,0.4); }
+.signal-badge.signal-hold { background: #F3E4C2; color: #7A5B1E; border: 1px solid rgba(184,137,46,0.4); }
+.signal-badge.signal-sell { background: #8C3A2C; color: #FBEDE9; }
 
 .live-banner {
     background: #FFFDF7;
-    padding: 16px 20px;
-    border-radius: 4px;
-    margin-bottom: 16px;
+    padding: 8px 16px;
+    border-radius: 999px;
     border: 1px solid rgba(184,137,46,0.3);
-    font-size: 19px;
+    font-size: 14px;
+    display: flex;
+    gap: 18px;
+    flex-wrap: wrap;
+    align-items: center;
 }
+.live-banner .live-item { text-align: left; line-height: 1.25; white-space: nowrap; }
+.live-banner .live-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: #8C7A54; }
+.live-banner .live-value { font-weight: 700; }
 
-.signal-buy { color: #4C6B48; font-weight: 700; }
-.signal-hold { color: #B8892E; font-weight: 700; }
-.signal-sell { color: #A6493A; font-weight: 700; }
+.live-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #4C6B48;
+    box-shadow: 0 0 0 rgba(76,107,72,0.6);
+    animation: live-pulse 1.6s infinite;
+    flex-shrink: 0;
+}
+@keyframes live-pulse {
+    0%   { box-shadow: 0 0 0 0 rgba(76,107,72,0.55); }
+    70%  { box-shadow: 0 0 0 7px rgba(76,107,72,0); }
+    100% { box-shadow: 0 0 0 0 rgba(76,107,72,0); }
+}
+.ticker-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #6B5D46;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin: 8px 0 2px 0;
+}
+.ticker-label-left {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+.ticker-label-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.ticker-change {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 2px 9px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+}
+.ticker-change.trend-up { background: rgba(76,107,72,0.14); color: #385B34; }
+.ticker-change.trend-down { background: rgba(166,73,58,0.14); color: #8C3A2C; }
+.ticker-change.trend-flat { background: rgba(140,122,84,0.14); color: #6B5D46; }
+.ticker-window {
+    font-size: 10px;
+    font-weight: 700;
+    color: #8C7A54;
+    background: rgba(140,122,84,0.12);
+    padding: 2px 8px;
+    border-radius: 999px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
 
 .disclaimer {
     font-size: 12px;
@@ -260,6 +365,30 @@ h1, h2, h3, .app-header h1 {
 }
 .stTabs [data-baseweb="tab"] p {
     font-size: 19px;
+}
+
+/* Native st.metric cards, restyled to match the cream/gold theme */
+[data-testid="stMetric"] {
+    background: #FFFDF7;
+    padding: 14px 16px;
+    border-radius: 4px;
+    border: 1px solid rgba(184,137,46,0.3);
+}
+[data-testid="stMetricLabel"] {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-size: 13px !important;
+    color: #8C7A54 !important;
+}
+[data-testid="stMetricValue"] {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 26px !important;
+    color: #2E271F !important;
+}
+[data-testid="stMetricDelta"] {
+    font-size: 13px !important;
+    font-weight: 600;
 }
 </style>
 """
@@ -521,42 +650,73 @@ CHART_TEMPLATE = dict(
     template="plotly_white",
     paper_bgcolor="#FFFDF7",
     plot_bgcolor="#FFFDF7",
-    font=dict(color="#2E271F", size=13, family="Georgia, 'Playfair Display', serif"),
+    font=dict(color="#2E2013", size=13, family="Georgia, 'Playfair Display', serif"),
 )
+
+AXIS_TICK_FONT = dict(color="#2E2013", size=12, family="Georgia, serif")
+AXIS_TITLE_FONT = dict(color="#2E2013", size=13, family="Georgia, serif")
+
+
+def compute_confidence_band(metal, forecast, featured_data, z=1.28, vol_window=60):
+    """
+    Builds an approximate confidence range around the forecast using the
+    trailing realized volatility of daily log returns, scaled by sqrt(time)
+    as under a random-walk assumption. z=1.28 corresponds to ~80% coverage.
+    """
+    vol = featured_data[metal]["LogReturn"].tail(vol_window).std()
+    if not np.isfinite(vol) or vol <= 0:
+        vol = featured_data[metal]["LogReturn"].std()
+    horizon = np.arange(1, len(forecast) + 1)
+    band = vol * np.sqrt(horizon) * z
+    upper = forecast["Forecast"].values * np.exp(band)
+    lower = forecast["Forecast"].values * np.exp(-band)
+    return upper, lower
 
 
 def create_forecast_chart(metal, forecast, featured_data, currency):
-    history = featured_data[metal].copy().tail(180)
+    history = featured_data[metal].copy()
+    upper, lower = compute_confidence_band(metal, forecast, featured_data)
 
     fig = go.Figure()
 
     fig.add_trace(go.Scatter(
         x=history.index, y=history["Close"] * CURRENCIES[currency], mode="lines",
-        name="Historical", line=dict(color="#B8892E", width=3)
+        name="Historical", line=dict(color="#B8892E", width=2)
     ))
 
     fig.add_trace(go.Scatter(
         x=[history.index[-1]], y=[history["Close"].iloc[-1] * CURRENCIES[currency]], mode="markers",
-        name="Current", marker=dict(size=12, color="#8C6A2E", symbol="diamond")
+        name="Current", marker=dict(size=11, color="#8C6A2E", symbol="diamond")
     ))
 
     if "SMA_20" in history.columns:
         fig.add_trace(go.Scatter(
             x=history.index, y=history["SMA_20"] * CURRENCIES[currency], mode="lines",
-            name="SMA 20", line=dict(color="#A08B63", width=2)
+            name="SMA 20", line=dict(color="#A08B63", width=1.5), visible="legendonly"
         ))
 
     if "SMA_50" in history.columns:
         fig.add_trace(go.Scatter(
             x=history.index, y=history["SMA_50"] * CURRENCIES[currency], mode="lines",
-            name="SMA 50", line=dict(color="#5C4A32", width=2)
+            name="SMA 50", line=dict(color="#5C4A32", width=1.5), visible="legendonly"
         ))
+
+    # Shaded confidence range (drawn before the forecast line so it sits underneath)
+    fig.add_trace(go.Scatter(
+        x=pd.concat([forecast["Date"], forecast["Date"][::-1]]),
+        y=list(upper * CURRENCIES[currency]) + list(lower[::-1] * CURRENCIES[currency]),
+        fill="toself",
+        fillcolor="rgba(76,107,72,0.15)",
+        line=dict(color="rgba(0,0,0,0)"),
+        hoverinfo="skip",
+        name="~80% Confidence Range",
+    ))
 
     fig.add_trace(go.Scatter(
         x=forecast["Date"], y=forecast["Forecast"] * CURRENCIES[currency], mode="lines+markers",
         name="Forecast",
         line=dict(color="#4C6B48", width=3, dash="dash"),
-        marker=dict(size=7)
+        marker=dict(size=6)
     ))
 
     fig.add_trace(go.Scatter(
@@ -565,15 +725,64 @@ def create_forecast_chart(metal, forecast, featured_data, currency):
         marker=dict(size=12, color="#4C6B48", symbol="star")
     ))
 
+    default_window_days = 90
+    visible_history = history.tail(default_window_days)
+    visible_low = min(visible_history["Close"].min(), float(np.min(lower))) * CURRENCIES[currency]
+    visible_high = max(visible_history["Close"].max(), float(np.max(upper))) * CURRENCIES[currency]
+    y_pad = (visible_high - visible_low) * 0.08 or visible_high * 0.01
+    default_y_range = [visible_low - y_pad, visible_high + y_pad]
+
     fig.update_layout(
-        title=f"{metal} Price Forecast",
-        hovermode="x unified", height=580,
-        legend=dict(orientation="h", y=1.05, x=0),
-        margin=dict(l=40, r=40, t=60, b=40),
+        height=560,
+        hovermode="x unified",
+        margin=dict(l=55, r=30, t=170, b=10),
+        showlegend=True,
+        legend=dict(
+            orientation="h", x=0, xanchor="left", y=1.02, yanchor="bottom",
+            font=dict(color="#2E2013", size=12, family="Georgia, serif"),
+            bgcolor="rgba(255,253,247,0.9)",
+        ),
+        annotations=[
+            dict(
+                text=f"<b>{metal} Price: History &amp; Forecast</b>",
+                xref="paper", yref="paper",
+                x=0, xanchor="left", y=1.34, yanchor="bottom",
+                showarrow=False,
+                font=dict(color="#241B0F", size=19, family="'Playfair Display', Georgia, serif"),
+            )
+        ],
         **CHART_TEMPLATE,
     )
-    fig.update_xaxes(showgrid=False, rangeslider_visible=False)
-    fig.update_yaxes(showgrid=True, gridcolor="#EFE4CD", title="Price")
+    fig.update_xaxes(
+        showgrid=False,
+        tickfont=AXIS_TICK_FONT,
+        linecolor="#8C7A54",
+        rangeslider=dict(visible=True, thickness=0.05, bgcolor="#EFE4CD"),
+        rangeselector=dict(
+            buttons=[
+                dict(count=7, label="7D", step="day", stepmode="backward"),
+                dict(count=1, label="1M", step="month", stepmode="backward"),
+                dict(count=3, label="3M", step="month", stepmode="backward"),
+                dict(count=6, label="6M", step="month", stepmode="backward"),
+                dict(count=1, label="1Y", step="year", stepmode="backward"),
+                dict(step="all", label="All"),
+            ],
+            bgcolor="#FFFDF7",
+            activecolor="#B8892E",
+            bordercolor="#B8892E",
+            borderwidth=1,
+            font=dict(color="#241B0F", size=12, family="Georgia, serif"),
+            x=0, xanchor="left", y=1.18, yanchor="bottom",
+        ),
+        # Default view: recent history through the end of the forecast horizon
+        range=[history.index[-default_window_days], forecast["Date"].iloc[-1]],
+    )
+    fig.update_yaxes(
+        showgrid=True, gridcolor="#EFE4CD",
+        title=dict(text="Price", font=AXIS_TITLE_FONT),
+        tickfont=AXIS_TICK_FONT,
+        range=default_y_range,
+    )
 
     return fig
 
@@ -628,6 +837,8 @@ def dashboard_metrics(metal, currency, models, featured_data, performance, forec
 
 
 def signal_css_class(signal):
+    if "STRONG BUY" in signal:
+        return "signal-strong-buy"
     if "BUY" in signal:
         return "signal-buy"
     if "SELL" in signal:
@@ -635,23 +846,69 @@ def signal_css_class(signal):
     return "signal-hold"
 
 
-def metric_card(title, value, help_text=None):
-    tooltip = f'<span class="info-tip" title="{help_text}">i</span>' if help_text else ""
+def confidence_tier(confidence):
+    """Returns (tier label, text color, bar/badge color) for the confidence score."""
+    if confidence >= 80:
+        return "High", "#2E4A2A", "#4C6B48"
+    if confidence >= 65:
+        return "Medium", "#7A5B1E", "#B8892E"
+    return "Low", "#8C3A2C", "#A6493A"
+
+
+def compute_24h_change(featured_data, metal):
+    """Latest close vs the prior close, as a percentage."""
+    df = featured_data[metal]
+    if len(df) < 2:
+        return 0.0
+    last_close = df["Close"].iloc[-1]
+    prev_close = df["Close"].iloc[-2]
+    return ((last_close - prev_close) / prev_close) * 100
+
+
+def trend_arrow(change_pct, flat_threshold=0.05):
+    if change_pct > flat_threshold:
+        return "▲", "trend-up"
+    if change_pct < -flat_threshold:
+        return "▼", "trend-down"
+    return "▬", "trend-flat"
+
+
+def signal_reasoning(metal, stats, featured_data, performance, forecast_days):
+    """Plain-language breakdown of why the model landed on this signal."""
+    df = featured_data[metal]
+    rsi = df["RSI"].iloc[-1]
+    macd = df["MACD"].iloc[-1]
+    macd_signal = df["MACD_SIGNAL"].iloc[-1]
+    dir_acc = performance[metal]["Directional Accuracy %"]
+
+    reasons = []
+    reasons.append(
+        f"Model projects a {stats['Expected Return']:+.2f}% move over the next {forecast_days} days."
+    )
+    if rsi >= 70:
+        reasons.append(f"RSI is {rsi:.0f} — overbought, which raises pullback risk.")
+    elif rsi <= 30:
+        reasons.append(f"RSI is {rsi:.0f} — oversold, which can favor a bounce.")
+    else:
+        reasons.append(f"RSI is {rsi:.0f} — neutral, no strong overbought/oversold pressure.")
+
+    if macd > macd_signal:
+        reasons.append("MACD is above its signal line (bullish crossover).")
+    else:
+        reasons.append("MACD is below its signal line (bearish crossover).")
+
+    reasons.append(
+        f"Historical directional accuracy for {metal} is {dir_acc:.1f}%, "
+        f"contributing to the {stats['Confidence']}% overall confidence score."
+    )
+    return reasons
+
+
+def metric_card(title, value):
     st.markdown(
-        f"""<div class="metric-card"><h4>{title}{tooltip}</h4><h2>{value}</h2></div>""",
+        f"""<div class="metric-card"><h4>{title}</h4><h2>{value}</h2></div>""",
         unsafe_allow_html=True,
     )
-
-
-CONFIDENCE_EXPLANATION = (
-    "Confidence is not the same as directional accuracy. It is a weighted "
-    "blend: 70% x directional accuracy (how often the model got the "
-    "up/down direction right) + 30% x R2 of price fit (how well predicted "
-    "prices track actual prices). A model can have modest directional "
-    "accuracy (e.g. ~48%) but a high R2 on price level, which pulls the "
-    "blended confidence score higher. See the Analytics tab for the raw "
-    "Directional Accuracy % and R2 figures."
-)
 
 
 def export_csv(df):
@@ -670,7 +927,7 @@ def export_excel(df):
 # LIVE MARKET BANNER
 # ==========================================================
 
-@st.cache_data(ttl=60, show_spinner=False)
+@st.cache_data(ttl=15, show_spinner=False)
 def get_live_market():
     try:
         gold_price = yf.Ticker("GC=F").history(period="1d")["Close"].iloc[-1]
@@ -683,6 +940,79 @@ def get_live_market():
         }
     except Exception:
         return {"Gold": "--", "Silver": "--", "USDINR": "--", "Time": "Offline"}
+
+
+@st.cache_data(ttl=20, show_spinner=False)
+def get_intraday_series(symbol, max_points=120):
+    """
+    Real intraday minute bars for the live sparkline. Falls back to 5-minute
+    bars over the last few days when 1-minute data isn't available (e.g.
+    market closed / weekend), so the chart still shows something real.
+    """
+    try:
+        df = yf.Ticker(symbol).history(period="1d", interval="1m")
+        if df is None or df.empty:
+            df = yf.Ticker(symbol).history(period="5d", interval="5m")
+        if df is None or df.empty:
+            return pd.Series(dtype=float)
+        return df["Close"].dropna().tail(max_points)
+    except Exception:
+        return pd.Series(dtype=float)
+
+
+def create_ticker_sparkline(series, currency, line_color, fill_color):
+    """Small, axis-free live line chart used for the header ticker."""
+    fig = go.Figure()
+
+    if series.empty:
+        fig.add_annotation(
+            text="Live data unavailable", showarrow=False,
+            font=dict(color="#8C7A54", size=11),
+        )
+        y_range = None
+    else:
+        y = series.values * CURRENCIES[currency]
+        x = list(series.index)
+        y_min, y_max = float(np.min(y)), float(np.max(y))
+        pad = (y_max - y_min) * 0.15 or max(y_max * 0.001, 0.01)
+        y_range = [y_min - pad, y_max + pad]
+
+        fig.add_trace(go.Scatter(
+            x=x, y=y, mode="lines",
+            line=dict(color=line_color, width=1.8),
+            fill="tozeroy", fillcolor=fill_color,
+            hovertemplate="%{y:.2f}<extra></extra>",
+        ))
+        fig.add_trace(go.Scatter(
+            x=[x[-1]], y=[y[-1]], mode="markers",
+            marker=dict(size=6, color=line_color),
+            showlegend=False, hoverinfo="skip",
+        ))
+
+    fig.update_layout(
+        height=70,
+        margin=dict(l=0, r=0, t=2, b=0),
+        paper_bgcolor="#FFFDF7",
+        plot_bgcolor="#FFFDF7",
+        showlegend=False,
+        hovermode="x",
+    )
+    fig.update_xaxes(visible=False, showgrid=False)
+    fig.update_yaxes(visible=False, showgrid=False, zeroline=False, range=y_range)
+    return fig
+
+
+@st.cache_data(ttl=30, show_spinner=False)
+def get_live_24h_change(symbol):
+    """Previous close vs latest close, used to label the live ticker charts."""
+    try:
+        closes = yf.Ticker(symbol).history(period="5d", interval="1d")["Close"].dropna()
+        if len(closes) < 2:
+            return None
+        prev, last = float(closes.iloc[-2]), float(closes.iloc[-1])
+        return ((last - prev) / prev) * 100
+    except Exception:
+        return None
 
 
 def render_live_banner(currency):
@@ -699,16 +1029,58 @@ def render_live_banner(currency):
     st.markdown(
         f"""
         <div class="live-banner">
-            <div style="display:flex;justify-content:space-around;flex-wrap:wrap;gap:10px;font-size:16px;">
-                <div>Gold<br><span style="color:#E8C56A;font-weight:700;">{currency} {gold_display}</span></div>
-                <div>Silver<br><span style="color:#CFD8DC;font-weight:700;">{currency} {silver_display}</span></div>
-                <div>USD/INR<br><span style="color:#42A5F5;font-weight:700;">{market['USDINR']} <small style="color:#6b7688;">(static)</small></span></div>
-                <div>Updated<br>{market['Time']}</div>
-            </div>
+            <span class="live-dot"></span>
+            <div class="live-item"><div class="live-label">Gold</div><div class="live-value" style="color:#B8892E;">{currency} {gold_display}</div></div>
+            <div class="live-item"><div class="live-label">Silver</div><div class="live-value" style="color:#6B7280;">{currency} {silver_display}</div></div>
+            <div class="live-item"><div class="live-label">USD/INR</div><div class="live-value" style="color:#3B6FA0;">{market['USDINR']} <small style="color:#8C7A54;font-weight:400;">(static)</small></div></div>
+            <div class="live-item"><div class="live-label">Updated</div><div class="live-value">{market['Time']}</div></div>
         </div>
         """,
         unsafe_allow_html=True,
     )
+
+
+@st.fragment(run_every=5)
+def render_live_section(currency):
+    """
+    Self-refreshing block: reruns every 5 seconds without re-triggering the
+    full app (so models aren't retrained). Underlying data is still fetched
+    at most once per cache TTL (15-20s), so this animates the live view
+    without hammering the data source.
+    """
+    render_live_banner(currency)
+    gold_series = get_intraday_series(MARKET_SYMBOLS["Gold"])
+    silver_series = get_intraday_series(MARKET_SYMBOLS["Silver"])
+    gold_change = get_live_24h_change(MARKET_SYMBOLS["Gold"])
+    silver_change = get_live_24h_change(MARKET_SYMBOLS["Silver"])
+
+    def ticker_header(label, change_pct):
+        if change_pct is None:
+            change_html = '<span class="ticker-change trend-flat">n/a</span>'
+        else:
+            arrow, trend_class = trend_arrow(change_pct)
+            change_html = f'<span class="ticker-change {trend_class}">{arrow} {change_pct:+.2f}%</span>'
+        return (
+            '<div class="ticker-label">'
+            f'<span class="ticker-label-left"><span class="live-dot"></span> {label} — Live</span>'
+            f'<span class="ticker-label-right">{change_html}<span class="ticker-window">24H</span></span>'
+            '</div>'
+        )
+
+    t1, t2 = st.columns(2)
+    with t1:
+        st.markdown(ticker_header("Gold", gold_change), unsafe_allow_html=True)
+        st.plotly_chart(
+            create_ticker_sparkline(gold_series, currency, "#B8892E", "rgba(184,137,46,0.15)"),
+            use_container_width=True, config={"displayModeBar": False}, key="gold_spark",
+        )
+    with t2:
+        st.markdown(ticker_header("Silver", silver_change), unsafe_allow_html=True)
+        st.plotly_chart(
+            create_ticker_sparkline(silver_series, currency, "#6B7280", "rgba(107,114,128,0.15)"),
+            use_container_width=True, config={"displayModeBar": False}, key="silver_spark",
+        )
+
 
 
 # ==========================================================
@@ -725,7 +1097,7 @@ def ai_summary(metal, currency, price_unit, stats):
 **Forecast Price (period):** {currency} {forecast_price:.2f} {get_unit_symbol(price_unit)}
 **Expected Return:** {stats['Expected Return']:.2f}%
 **Recommendation:** {stats['Signal']}
-**Confidence:** {stats['Confidence']}%  &mdash; a weighted blend of directional accuracy and price R2, *not* the same as raw model accuracy (hover the &#9432; on the Confidence card, or see the Analytics tab, for the breakdown)
+**Confidence:** {stats['Confidence']}%  (blend of directional accuracy and R2)
 """
 
 
@@ -982,20 +1354,25 @@ def premium_report(metal, currency, investment, models, featured_data, performan
 # APP LAYOUT
 # ==========================================================
 
-st.markdown(
-    f"""
-    <div class="app-header">
-        <h1>{PROJECT_NAME}</h1>
-        <p>An AI-assisted forecasting platform for gold and silver markets</p>
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
+header_col1, header_col2 = st.columns([3, 1], vertical_alignment="center")
+with header_col1:
+    st.markdown(
+        f"""
+        <div class="app-header">
+            <div class="title-block">
+                <h1>{PROJECT_NAME}</h1>
+                <p>An AI-assisted forecasting platform for gold and silver markets</p>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+with header_col2:
+    live_currency = st.selectbox(
+        "Live Market Currency", list(CURRENCIES.keys()), key="live_currency", label_visibility="collapsed"
+    )
 
-live_col1, live_col2 = st.columns([5, 1])
-with live_col2:
-    live_currency = st.selectbox("Live Market Currency", list(CURRENCIES.keys()), key="live_currency")
-render_live_banner(live_currency)
+render_live_section(live_currency)
 
 with st.spinner("Loading market data and training models..."):
     market_data = load_market_data()
@@ -1027,26 +1404,56 @@ with tab_forecast:
         lambda x: round(convert_price(x, currency), 2)
     )
 
+    change_24h = compute_24h_change(featured_data, metal)
+    arrow, trend_class = trend_arrow(change_24h)
+    dir_acc = performance[metal]["Directional Accuracy %"]
+    conf_label, conf_text_color, conf_bar_color = confidence_tier(stats["Confidence"])
+
     c1, c2, c3, c4 = st.columns(4)
     with c1:
-        metric_card("Current Price", f"{currency} {convert_price_unit(stats['Current Price'], price_unit)} {get_unit_symbol(price_unit)}")
+        st.markdown(
+            f"""<div class="metric-card accent-neutral"><h4>Current Price</h4>
+            <h2>{currency} {convert_price_unit(stats['Current Price'], price_unit)} {get_unit_symbol(price_unit)}</h2>
+            <div class="trend-pill {trend_class}">{arrow} {change_24h:+.2f}% <span style="font-weight:500;">(24H)</span></div></div>""",
+            unsafe_allow_html=True,
+        )
     with c2:
-        metric_card("Forecast Price", f"{currency} {convert_price_unit(stats['Forecast Price'], price_unit)} {get_unit_symbol(price_unit)}")
+        f_arrow, f_class = trend_arrow(stats["Expected Return"])
+        st.markdown(
+            f"""<div class="metric-card accent-neutral"><h4>Forecast Price ({forecast_days}D)</h4>
+            <h2>{currency} {convert_price_unit(stats['Forecast Price'], price_unit)} {get_unit_symbol(price_unit)}</h2>
+            <div class="trend-pill {f_class}">{f_arrow} {stats['Expected Return']:+.2f}% <span style="font-weight:500;">expected</span></div></div>""",
+            unsafe_allow_html=True,
+        )
     with c3:
-        metric_card("Confidence", f"{stats['Confidence']}%", help_text=CONFIDENCE_EXPLANATION)
+        st.markdown(
+            f"""<div class="metric-card accent-info"><h4>Confidence</h4>
+            <h2>{stats['Confidence']}%</h2>
+            <div class="confidence-bar-wrap"><div class="confidence-bar-fill" style="width:{min(stats['Confidence'], 100)}%; background:{conf_bar_color};"></div></div>
+            <div class="confidence-tier-label" style="color:{conf_text_color}; background:{conf_bar_color}22;">{conf_label} Confidence</div>
+            <div class="accuracy-note">Model accuracy: <b>{dir_acc:.1f}%</b></div></div>""",
+            unsafe_allow_html=True,
+        )
     with c4:
         st.markdown(
-            f"""<div class="metric-card"><h4>Recommendation</h4>
-            <h2 class="{signal_css_class(stats['Signal'])}">{stats['Signal']}</h2></div>""",
+            f"""<div class="metric-card accent-good"><h4>Recommendation</h4>
+            <div class="signal-badge {signal_css_class(stats['Signal'])}">{stats['Signal']}</div></div>""",
             unsafe_allow_html=True,
         )
 
-    st.plotly_chart(create_forecast_chart(metal, forecast, featured_data, currency), use_container_width=True)
+    with st.expander("Why this recommendation?", expanded=False):
+        for reason in signal_reasoning(metal, stats, featured_data, performance, forecast_days):
+            st.markdown(f"- {reason}")
 
-    st.markdown(
-        f'<div class="tight-block">\n\n{ai_summary(metal, currency, price_unit, stats)}\n\n</div>',
-        unsafe_allow_html=True,
+    st.plotly_chart(create_forecast_chart(metal, forecast, featured_data, currency), use_container_width=True)
+    st.caption(
+        "Drag the range slider or use the buttons above the chart to zoom into a time period. "
+        "The shaded green band around the forecast is an approximate 80% confidence range "
+        "derived from recent price volatility."
     )
+
+
+    st.markdown(ai_summary(metal, currency, price_unit, stats))
 
     st.dataframe(forecast_display, use_container_width=True)
 
