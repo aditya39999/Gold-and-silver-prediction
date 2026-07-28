@@ -41,7 +41,7 @@ warnings.filterwarnings("ignore")
 # ==========================================================
 
 PROJECT_NAME = "Gold and Silver Prediction"
-VERSION = "1.2.0"
+VERSION = "1.2.1"
 
 RANDOM_STATE = 42
 DEFAULT_FORECAST_DAYS = 30
@@ -585,6 +585,60 @@ def forecast_prices(metal, forecast_days, models, featured_data):
 def convert_price(price, currency):
     return price * CURRENCIES[currency]
 
+def convert_price_unit(price, unit):
+    if unit == "Gram":
+        return round(price / TROY_OUNCE, 2)
+    return round(price, 2)
+
+def get_unit_symbol(unit):
+    return "/g" if unit == "Gram" else "/oz"
+
+def dashboard_metrics(metal, currency, models, featured_data, performance, forecast_days=30):
+    history = featured_data[metal]
+    forecast = forecast_prices(metal, forecast_days, models, featured_data)
+
+    current = convert_price(history["Close"].iloc[-1], currency)
+    future = convert_price(forecast["Forecast"].iloc[-1], currency)
+    change = ((future - current) / current) * 100
+
+    if change > 2:
+        signal = "STRONG BUY"
+    elif change > 0:
+        signal = "BUY"
+    elif change > -2:
+        signal = "HOLD"
+    else:
+        signal = "SELL"
+
+    dir_acc = performance[metal]["Directional Accuracy %"]
+    r2 = max(performance[metal]["R2 (price)"], 0) * 100
+    confidence = round(0.7 * dir_acc + 0.3 * r2, 2)
+
+    return {
+        "Current Price": round(current, 2),
+        "Forecast Price": round(future, 2),
+        "Expected Return": round(change, 2),
+        "Signal": signal,
+        "Confidence": confidence,
+        "Forecast": forecast,
+    }
+
+
+def signal_css_class(signal):
+    if "STRONG BUY" in signal:
+        return "signal-strong-buy"
+    if "BUY" in signal:
+        return "signal-buy"
+    if "SELL" in signal:
+        return "signal-sell"
+    return "signal-hold"
+
+def confidence_tier(confidence):
+    if confidence >= 80:
+        return "High", "#2E4A2A", "#4C6B48"
+    if confidence >= 65:
+        return "Medium", "#7A5B1E", "#B8892E"
+    return "Low", "#8C3A2C", "#A6493A"
 
 def compute_24h_change(featured_data, metal):
     df = featured_data[metal]
@@ -646,6 +700,90 @@ def compute_market_pulse(metal, featured_data, performance):
     else:
         label = "Neutral"
     return {"label": label, "score": score}
+
+
+def compute_confidence_band(metal, forecast, featured_data, z=1.28, vol_window=60):
+    vol = featured_data[metal]["LogReturn"].tail(vol_window).std()
+    if not np.isfinite(vol) or vol <= 0:
+        vol = featured_data[metal]["LogReturn"].std()
+    horizon = np.arange(1, len(forecast) + 1)
+    band = vol * np.sqrt(horizon) * z
+    upper = forecast["Forecast"].values * np.exp(band)
+    lower = forecast["Forecast"].values * np.exp(-band)
+    return upper, lower
+
+def create_forecast_chart(metal, forecast, featured_data, currency):
+    history = featured_data[metal].copy()
+    upper, lower = compute_confidence_band(metal, forecast, featured_data)
+
+    fig = go.Figure()
+
+    fig.add_trace(go.Scatter(
+        x=history.index, y=history["Close"] * CURRENCIES[currency], mode="lines",
+        name="Historical", line=dict(color="#B8892E", width=2)
+    ))
+
+    fig.add_trace(go.Scatter(
+        x=pd.concat([forecast["Date"], forecast["Date"][::-1]]),
+        y=list(upper * CURRENCIES[currency]) + list(lower[::-1] * CURRENCIES[currency]),
+        fill="toself",
+        fillcolor="rgba(76,107,72,0.15)",
+        line=dict(color="rgba(0,0,0,0)"),
+        hoverinfo="skip",
+        name="~80% Confidence Range",
+    ))
+
+    fig.add_trace(go.Scatter(
+        x=forecast["Date"], y=forecast["Forecast"] * CURRENCIES[currency], mode="lines+markers",
+        name="Forecast",
+        line=dict(color="#4C6B48", width=3, dash="dash"),
+        marker=dict(size=6)
+    ))
+
+    default_window_days = 90
+    visible_history = history.tail(default_window_days)
+    visible_low = min(visible_history["Close"].min(), float(np.min(lower))) * CURRENCIES[currency]
+    visible_high = max(visible_history["Close"].max(), float(np.max(upper))) * CURRENCIES[currency]
+    y_pad = (visible_high - visible_low) * 0.08 or visible_high * 0.01
+    default_y_range = [visible_low - y_pad, visible_high + y_pad]
+
+    fig.update_layout(
+        height=560,
+        hovermode="x unified",
+        margin=dict(l=55, r=30, t=170, b=10),
+        showlegend=True,
+        template="plotly_white",
+        paper_bgcolor="#FFFDF7",
+        plot_bgcolor="#FFFDF7",
+        legend=dict(
+            orientation="h", x=0, xanchor="left", y=1.02, yanchor="bottom",
+            font=dict(color="#2E2013", size=12, family="Georgia, serif"),
+            bgcolor="rgba(255,253,247,0.9)",
+        ),
+        annotations=[
+            dict(
+                text=f"<b>{metal} Price: History &amp; Forecast</b>",
+                xref="paper", yref="paper",
+                x=0, xanchor="left", y=1.34, yanchor="bottom",
+                showarrow=False,
+                font=dict(color="#241B0F", size=19, family="'Playfair Display', Georgia, serif"),
+            )
+        ]
+    )
+    fig.update_xaxes(
+        showgrid=False,
+        tickfont=dict(color="#2E2013", size=12, family="Georgia, serif"),
+        linecolor="#8C7A54",
+        rangeslider=dict(visible=True, thickness=0.05, bgcolor="#EFE4CD"),
+        range=[history.index[-default_window_days], forecast["Date"].iloc[-1]],
+    )
+    fig.update_yaxes(
+        showgrid=True, gridcolor="#EFE4CD",
+        title=dict(text="Price", font=dict(color="#2E2013", size=13, family="Georgia, serif")),
+        tickfont=dict(color="#2E2013", size=12, family="Georgia, serif"),
+        range=default_y_range,
+    )
+    return fig
 
 
 # ==========================================================
@@ -795,7 +933,6 @@ elif st.session_state.active_nav == "Forecast":
     with col4:
         forecast_days = st.number_input("Forecast Days", min_value=7, max_value=90, value=DEFAULT_FORECAST_DAYS, step=1, key="forecast_days")
 
-    from app import dashboard_metrics, signal_css_class, confidence_tier, signal_reasoning, create_forecast_chart
     stats = dashboard_metrics(metal, currency, models, featured_data, performance, forecast_days)
     forecast = stats["Forecast"].copy()
     forecast_display = forecast.copy()
