@@ -587,6 +587,144 @@ div.element-container:has(> div > div.chart-spacer) {
     font-size: 24px;
     font-weight: 700;
 }
+
+/* ==========================================================
+   DASHBOARD V2 — compact command-centre layout
+   ========================================================== */
+[data-testid="stAppViewBlockContainer"],
+[data-testid="stMainBlockContainer"] {
+    opacity: 1 !important;
+    filter: none !important;
+}
+
+/* Sticky primary navigation */
+.stTabs [data-baseweb="tab-list"] {
+    position: sticky;
+    top: 2.9rem;
+    z-index: 900;
+    background: rgba(247,241,228,0.94);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    padding: 8px 10px;
+    border: 1px solid rgba(184,137,46,.24);
+    border-radius: 14px;
+    box-shadow: 0 8px 24px rgba(46,39,31,.06);
+    gap: 3px;
+}
+.stTabs [data-baseweb="tab"] {
+    border-radius: 999px;
+    padding-left: 14px !important;
+    padding-right: 14px !important;
+}
+.stTabs [data-baseweb="tab"]:nth-last-child(2) {
+    background: linear-gradient(135deg,#2A241B,#171714);
+    border: 1px solid #B8892E;
+}
+.stTabs [data-baseweb="tab"]:nth-last-child(2) p {
+    color: #E8C56A !important;
+    font-weight: 800 !important;
+    letter-spacing: .08em;
+}
+
+/* Forecast command surface */
+.forecast-command-shell {
+    background: linear-gradient(135deg,rgba(255,253,247,.96),rgba(239,228,205,.78));
+    border: 1px solid rgba(184,137,46,.35);
+    border-radius: 18px;
+    padding: 15px 18px 7px;
+    box-shadow: 0 12px 35px rgba(46,39,31,.07);
+    margin: 10px 0 12px;
+}
+.forecast-command-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .22em;
+    color: #8C6A2E;
+    font-weight: 800;
+}
+
+/* Compact market pulse strip */
+.market-pulse-strip {
+    display:grid;
+    grid-template-columns:1.15fr 1.15fr .9fr .9fr;
+    gap:10px;
+    background:#171714;
+    color:#F7F1E4;
+    border:1px solid rgba(232,197,106,.38);
+    border-radius:16px;
+    padding:12px 16px;
+    margin:8px 0 14px;
+    box-shadow:0 10px 28px rgba(23,23,20,.12);
+}
+.market-pulse-strip .pulse-kicker {
+    color:#BDAE8D;font-size:10px;letter-spacing:.16em;text-transform:uppercase;
+}
+.market-pulse-strip .pulse-value {
+    font-family:'Playfair Display',Georgia,serif;font-size:18px;font-weight:700;margin-top:2px;
+}
+.market-pulse-strip .gold-value {color:#E8C56A}
+.market-pulse-strip .silver-value {color:#D8DCE2}
+
+/* Hero prediction */
+.prediction-hero {
+    background:#FFFDF7;
+    border:1px solid rgba(184,137,46,.34);
+    border-top:3px solid #B8892E;
+    border-radius:14px;
+    min-height:195px;
+    padding:22px 24px;
+    box-shadow:0 10px 28px rgba(46,39,31,.06);
+}
+.prediction-hero .eyebrow {
+    font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#8C7A54;font-weight:800;
+}
+.prediction-flow {
+    display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:18px 0 10px;
+}
+.prediction-flow .price {
+    font-family:'Playfair Display',Georgia,serif;font-size:29px;font-weight:700;color:#2E271F;
+}
+.prediction-flow .arrow {font-size:25px;color:#B8892E}
+.prediction-meta {display:flex;gap:8px;flex-wrap:wrap;margin-top:13px}
+.prediction-chip {
+    border-radius:999px;padding:6px 10px;font-size:12px;font-weight:800;
+    background:#F2E6D8;color:#8E382C;
+}
+.prediction-chip.dark {background:#171714;color:#E8C56A}
+.prediction-chip.soft {background:#ECEDE7;color:#355E3B}
+
+/* AI signal card */
+.ai-signal-card {
+    min-height:195px;
+    border-radius:14px;
+    padding:22px 22px;
+    color:#F7F1E4;
+    background:
+      radial-gradient(circle at 85% 15%,rgba(184,137,46,.23),transparent 32%),
+      linear-gradient(145deg,#24211C,#171714);
+    border:1px solid rgba(232,197,106,.42);
+    box-shadow:0 14px 34px rgba(23,23,20,.16);
+}
+.ai-signal-card .eyebrow {color:#BDAE8D;font-size:11px;letter-spacing:.18em;text-transform:uppercase}
+.ai-signal-card .signal {font-family:'Playfair Display',Georgia,serif;font-size:38px;color:#E8C56A;margin:10px 0 4px}
+.ai-signal-card .sub {font-size:13px;color:#D7CCB5;line-height:1.55}
+.ai-signal-card .beam {
+    height:5px;border-radius:999px;background:#34322D;margin:16px 0 8px;overflow:hidden;
+}
+.ai-signal-card .beam > span {
+    display:block;height:100%;border-radius:999px;
+    background:linear-gradient(90deg,#8C6A2E,#E8C56A);
+}
+
+/* Advanced / Future Lab terminal layer */
+.future-lab-shell {
+    background:#171714;color:#F7F1E4;border:1px solid #8C6A2E;
+    border-radius:18px;padding:18px 22px;margin:8px 0 16px;
+    box-shadow:0 18px 50px rgba(23,23,20,.18);
+}
+.future-lab-shell h2 {color:#E8C56A !important;margin:0}
+.future-lab-shell p {color:#CFC4AE !important}
+
 </style>
 """
 
@@ -685,12 +823,12 @@ def render_cinematic_intro():
         18%  {{ opacity: 1; }}
         100% {{ opacity: 0; transform: translateY(-120px) scale(1.3); }}
     }}
+    /* Do not animate/filter the Streamlit app container itself.
+       This prevents reruns from leaving dashboard content faded or blurred. */
     [data-testid="stAppViewBlockContainer"] {{
-        animation: intro-blur-focus 2.3s ease forwards;
-    }}
-    @keyframes intro-blur-focus {{
-        0%   {{ filter: blur(20px); transform: scale(1.025); }}
-        100% {{ filter: blur(0); transform: scale(1); }}
+        filter: none !important;
+        opacity: 1 !important;
+        transform: none !important;
     }}
     .st-key-skip_intro_btn {{
         position: fixed !important;
@@ -2227,7 +2365,10 @@ def render_3d_metal_world():
 
 
 def render_future_lab(models, featured_data, performance, performance_df):
-    st.markdown("## Future Lab")
+    st.markdown("""<div class="future-lab-shell">
+      <h2>FUTURE LAB // AI MARKET SIMULATION</h2>
+      <p>Digital twins, Monte Carlo futures, model battles, prediction DNA and market time travel.</p>
+    </div>""", unsafe_allow_html=True)
     st.caption("Experimental market-simulation and explainability workspace. Scenario controls are educational assumptions, not financial advice.")
 
     render_3d_metal_world()
@@ -2334,6 +2475,31 @@ def render_future_lab(models, featured_data, performance, performance_df):
     """, unsafe_allow_html=True)
 
 
+
+def render_compact_market_pulse(currency, featured_data, performance):
+    """One-line market pulse used on the Forecast page to reduce vertical clutter."""
+    try:
+        g = featured_data["Gold"]["Close"].dropna()
+        s = featured_data["Silver"]["Close"].dropna()
+        gp = float(g.iloc[-1]) * CURRENCIES[currency]
+        sp = float(s.iloc[-1]) * CURRENCIES[currency]
+        gc = ((g.iloc[-1] / g.iloc[-2]) - 1) * 100 if len(g) > 1 else 0.0
+        sc = ((s.iloc[-1] / s.iloc[-2]) - 1) * 100 if len(s) > 1 else 0.0
+        avg_acc = (performance["Gold"]["Directional Accuracy %"] + performance["Silver"]["Directional Accuracy %"]) / 2
+        direction = "RISK-OFF" if (gc + sc) < 0 else "RISK-ON"
+        st.markdown(
+            f"""<div class="market-pulse-strip">
+              <div><div class="pulse-kicker">Gold / Live</div><div class="pulse-value gold-value">{currency} {gp:,.2f} &nbsp; {gc:+.2f}%</div></div>
+              <div><div class="pulse-kicker">Silver / Live</div><div class="pulse-value silver-value">{currency} {sp:,.2f} &nbsp; {sc:+.2f}%</div></div>
+              <div><div class="pulse-kicker">Market Regime</div><div class="pulse-value">{direction}</div></div>
+              <div><div class="pulse-kicker">AI Direction Accuracy</div><div class="pulse-value">{avg_acc:.1f}%</div></div>
+            </div>""",
+            unsafe_allow_html=True,
+        )
+    except Exception:
+        pass
+
+
 # ==========================================================
 # APP LAYOUT
 # ==========================================================
@@ -2356,7 +2522,6 @@ with header_col2:
         "Live Market Currency", list(CURRENCIES.keys()), key="live_currency", label_visibility="collapsed"
     )
 
-render_live_section(live_currency)
 
 with st.spinner("Loading market data and training models..."):
     market_data = load_market_data()
@@ -2375,6 +2540,10 @@ with tab_future_lab:
 
 # ---------------- FORECAST TAB ----------------
 with tab_forecast:
+    render_compact_market_pulse(live_currency, featured_data, performance)
+    st.markdown("""<div class="forecast-command-shell">
+      <div class="forecast-command-title">Forecast Command Bar · Configure the AI horizon</div>
+    </div>""", unsafe_allow_html=True)
     col1, col2, col3, col4 = st.columns(4)
     with col1:
         metal = st.selectbox("Metal", ["Gold", "Silver"], key="forecast_metal")
@@ -2386,6 +2555,19 @@ with tab_forecast:
         forecast_days = st.number_input(
             "Forecast Days", min_value=7, max_value=90, value=DEFAULT_FORECAST_DAYS, step=1, key="forecast_days"
         )
+
+    def _set_horizon(days):
+        st.session_state["forecast_days"] = days
+
+    q1, q2, q3, q4 = st.columns([1, 1, 1, 5])
+    with q1:
+        st.button("7D", key="horizon_7", use_container_width=True, on_click=_set_horizon, args=(7,))
+    with q2:
+        st.button("30D", key="horizon_30", use_container_width=True, on_click=_set_horizon, args=(30,))
+    with q3:
+        st.button("90D", key="horizon_90", use_container_width=True, on_click=_set_horizon, args=(90,))
+    with q4:
+        st.caption("Quick horizon · or enter any value from 7–90 days above")
 
     stats = dashboard_metrics(metal, currency, models, featured_data, performance, forecast_days)
     forecast = stats["Forecast"].copy()
@@ -2400,44 +2582,39 @@ with tab_forecast:
     r2_pct = max(performance[metal]["R2 (price)"], 0) * 100
     conf_label, conf_text_color, conf_bar_color = confidence_tier(stats["Confidence"])
 
-    c1, c2, c3, c4 = st.columns(4)
-    with c1:
-        st.markdown(
-            f"""<div class="metric-card accent-neutral"><h4>Current Price</h4>
-            <h2>{currency} {convert_price_unit(stats['Current Price'], price_unit)} {get_unit_symbol(price_unit)}</h2>
-            <div class="trend-pill {trend_class}">{arrow} {change_24h:+.2f}% <span style="font-weight:500;">(24H)</span></div></div>""",
-            unsafe_allow_html=True,
-        )
-    with c2:
+    # Stronger hierarchy: one hero prediction + one AI signal panel.
+    hero_col, signal_col = st.columns([2.15, 1])
+    with hero_col:
         f_arrow, f_class = trend_arrow(stats["Expected Return"])
+        momentum_text = "Bearish momentum" if stats["Expected Return"] < -0.5 else ("Bullish momentum" if stats["Expected Return"] > 0.5 else "Neutral momentum")
         st.markdown(
-            f"""<div class="metric-card accent-neutral"><h4>Forecast Price ({forecast_days}D)</h4>
-            <h2>{currency} {convert_price_unit(stats['Forecast Price'], price_unit)} {get_unit_symbol(price_unit)}</h2>
-            <div class="trend-pill {f_class}">{f_arrow} {stats['Expected Return']:+.2f}% <span style="font-weight:500;">expected</span></div></div>""",
+            f"""<div class="prediction-hero">
+              <div class="eyebrow">{metal.upper()} · AI PRICE PATH · {forecast_days} DAY HORIZON</div>
+              <div class="prediction-flow">
+                <span class="price">{currency} {convert_price_unit(stats['Current Price'], price_unit)}</span>
+                <span class="arrow">→</span>
+                <span class="price">{currency} {convert_price_unit(stats['Forecast Price'], price_unit)}</span>
+                <span style="font-size:13px;color:#8C7A54">{get_unit_symbol(price_unit)}</span>
+              </div>
+              <div class="prediction-meta">
+                <span class="prediction-chip">{f_arrow} {stats['Expected Return']:+.2f}% expected</span>
+                <span class="prediction-chip soft">{change_24h:+.2f}% today</span>
+                <span class="prediction-chip dark">{stats['Confidence']:.2f}% confidence</span>
+              </div>
+            </div>""",
             unsafe_allow_html=True,
         )
-    with c3:
-        confidence_tooltip = (
-            f"Confidence = 0.7 &times; Directional Accuracy + 0.3 &times; R&sup2; (as %).<br><br>"
-            f"Directional Accuracy ({dir_acc:.1f}%) is how often the model got the "
-            f"up/down direction right, not the exact price.<br>"
-            f"R&sup2; ({r2_pct:.1f}%) is how well predicted prices fit actual prices.<br><br>"
-            f"It's a weighted blend, so it will not equal either number on its own — "
-            f"that's why it can read higher than the accuracy figure below."
-        )
+    with signal_col:
+        signal = stats["Signal"]
+        momentum_text = "Bearish momentum" if stats["Expected Return"] < -0.5 else ("Bullish momentum" if stats["Expected Return"] > 0.5 else "Neutral momentum")
         st.markdown(
-            f"""<div class="metric-card accent-info"><h4>Confidence
-            <span class="info-tooltip">i<span class="tooltip-text">{confidence_tooltip}</span></span></h4>
-            <h2>{stats['Confidence']}%</h2>
-            <div class="confidence-bar-wrap"><div class="confidence-bar-fill" style="--target-width:{min(stats['Confidence'], 100)}%; background:{conf_bar_color};"></div></div>
-            <div class="confidence-tier-label" style="color:{conf_text_color}; background:{conf_bar_color}22;">{conf_label} Confidence</div>
-            <div class="accuracy-note">Model accuracy: <b>{dir_acc:.1f}%</b></div></div>""",
-            unsafe_allow_html=True,
-        )
-    with c4:
-        st.markdown(
-            f"""<div class="metric-card accent-good"><h4>Recommendation</h4>
-            <div class="signal-badge {signal_css_class(stats['Signal'])}">{stats['Signal']}</div></div>""",
+            f"""<div class="ai-signal-card">
+              <div class="eyebrow">AI SIGNAL ENGINE</div>
+              <div class="signal">{signal}</div>
+              <div class="sub">{momentum_text}<br>Projected move: <b>{stats['Expected Return']:+.2f}%</b><br>Directional accuracy: <b>{dir_acc:.1f}%</b></div>
+              <div class="beam"><span style="width:{min(stats['Confidence'],100)}%"></span></div>
+              <div class="sub">Confidence {stats['Confidence']:.2f}% · {conf_label}</div>
+            </div>""",
             unsafe_allow_html=True,
         )
 
@@ -2445,7 +2622,6 @@ with tab_forecast:
         for reason in signal_reasoning(metal, stats, featured_data, performance, forecast_days):
             st.markdown(f"- {reason}")
 
-    st.markdown('<div class="chart-spacer"></div>', unsafe_allow_html=True)
     st.markdown('<div class="chart-reveal">', unsafe_allow_html=True)
     st.plotly_chart(create_forecast_chart(metal, forecast, featured_data, currency), use_container_width=True)
     st.markdown('</div>', unsafe_allow_html=True)
@@ -2458,25 +2634,27 @@ with tab_forecast:
 
     st.markdown(ai_summary(metal, currency, price_unit, stats))
 
-    st.dataframe(forecast_display, use_container_width=True)
-
-    dl1, dl2 = st.columns(2)
-    with dl1:
-        st.download_button(
-            "Download Forecast (CSV)",
-            data=forecast_display.to_csv(index=False),
-            file_name="forecast.csv",
-            mime="text/csv",
-        )
-    with dl2:
-        excel_path = export_excel(forecast_display)
-        with open(excel_path, "rb") as f:
+    with st.expander("View forecast data & exports", expanded=False):
+        st.dataframe(forecast_display, use_container_width=True, height=320)
+        dl1, dl2 = st.columns(2)
+        with dl1:
             st.download_button(
-                "Download Forecast (Excel)",
-                data=f.read(),
-                file_name="forecast.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                "Download Forecast (CSV)",
+                data=forecast_display.to_csv(index=False),
+                file_name="forecast.csv",
+                mime="text/csv",
+                key="forecast_csv_download",
             )
+        with dl2:
+            excel_path = export_excel(forecast_display)
+            with open(excel_path, "rb") as f:
+                st.download_button(
+                    "Download Forecast (Excel)",
+                    data=f.read(),
+                    file_name="forecast.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    key="forecast_excel_download",
+                )
 
 # ---------------- MARKET PULSE TAB ----------------
 with tab_pulse:
