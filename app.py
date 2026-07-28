@@ -201,6 +201,33 @@ h1, h2, h3, .app-header h1 {
 .live-banner .live-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: #8C7A54; }
 .live-banner .live-value { font-weight: 700; }
 
+.live-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #4C6B48;
+    box-shadow: 0 0 0 rgba(76,107,72,0.6);
+    animation: live-pulse 1.6s infinite;
+    flex-shrink: 0;
+}
+@keyframes live-pulse {
+    0%   { box-shadow: 0 0 0 0 rgba(76,107,72,0.55); }
+    70%  { box-shadow: 0 0 0 7px rgba(76,107,72,0); }
+    100% { box-shadow: 0 0 0 0 rgba(76,107,72,0); }
+}
+.ticker-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #6B5D46;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 10px 0 2px 0;
+}
+
 .signal-buy { color: #4C6B48; font-weight: 700; }
 .signal-hold { color: #B8892E; font-weight: 700; }
 .signal-sell { color: #A6493A; font-weight: 700; }
@@ -613,8 +640,8 @@ def create_forecast_chart(metal, forecast, featured_data, currency):
 
     fig.update_layout(
         title=f"{metal} Price: History &amp; Forecast",
-        hovermode="x unified", height=560,
-        legend=dict(orientation="h", y=1.1, x=0),
+        hovermode="x unified", height=430,
+        legend=dict(orientation="h", y=1.12, x=0),
         margin=dict(l=40, r=30, t=70, b=10),
         **CHART_TEMPLATE,
     )
@@ -772,7 +799,7 @@ def export_excel(df):
 # LIVE MARKET BANNER
 # ==========================================================
 
-@st.cache_data(ttl=60, show_spinner=False)
+@st.cache_data(ttl=15, show_spinner=False)
 def get_live_market():
     try:
         gold_price = yf.Ticker("GC=F").history(period="1d")["Close"].iloc[-1]
@@ -785,6 +812,61 @@ def get_live_market():
         }
     except Exception:
         return {"Gold": "--", "Silver": "--", "USDINR": "--", "Time": "Offline"}
+
+
+@st.cache_data(ttl=20, show_spinner=False)
+def get_intraday_series(symbol, max_points=120):
+    """
+    Real intraday minute bars for the live sparkline. Falls back to 5-minute
+    bars over the last few days when 1-minute data isn't available (e.g.
+    market closed / weekend), so the chart still shows something real.
+    """
+    try:
+        df = yf.Ticker(symbol).history(period="1d", interval="1m")
+        if df is None or df.empty:
+            df = yf.Ticker(symbol).history(period="5d", interval="5m")
+        if df is None or df.empty:
+            return pd.Series(dtype=float)
+        return df["Close"].dropna().tail(max_points)
+    except Exception:
+        return pd.Series(dtype=float)
+
+
+def create_ticker_sparkline(series, currency, line_color, fill_color):
+    """Small, axis-free live line chart used for the header ticker."""
+    fig = go.Figure()
+
+    if series.empty:
+        fig.add_annotation(
+            text="Live data unavailable", showarrow=False,
+            font=dict(color="#8C7A54", size=12),
+        )
+    else:
+        y = series.values * CURRENCIES[currency]
+        x = list(series.index)
+        fig.add_trace(go.Scatter(
+            x=x, y=y, mode="lines",
+            line=dict(color=line_color, width=2),
+            fill="tozeroy", fillcolor=fill_color,
+            hovertemplate="%{y:.2f}<extra></extra>",
+        ))
+        fig.add_trace(go.Scatter(
+            x=[x[-1]], y=[y[-1]], mode="markers",
+            marker=dict(size=7, color=line_color),
+            showlegend=False, hoverinfo="skip",
+        ))
+
+    fig.update_layout(
+        height=130,
+        margin=dict(l=0, r=0, t=4, b=0),
+        paper_bgcolor="#FFFDF7",
+        plot_bgcolor="#FFFDF7",
+        showlegend=False,
+        hovermode="x",
+    )
+    fig.update_xaxes(visible=False, showgrid=False)
+    fig.update_yaxes(visible=False, showgrid=False, zeroline=False)
+    return fig
 
 
 def render_live_banner(currency):
@@ -801,6 +883,7 @@ def render_live_banner(currency):
     st.markdown(
         f"""
         <div class="live-banner">
+            <span class="live-dot"></span>
             <div class="live-item"><div class="live-label">Gold</div><div class="live-value" style="color:#B8892E;">{currency} {gold_display}</div></div>
             <div class="live-item"><div class="live-label">Silver</div><div class="live-value" style="color:#6B7280;">{currency} {silver_display}</div></div>
             <div class="live-item"><div class="live-label">USD/INR</div><div class="live-value" style="color:#3B6FA0;">{market['USDINR']} <small style="color:#8C7A54;font-weight:400;">(static)</small></div></div>
@@ -809,6 +892,40 @@ def render_live_banner(currency):
         """,
         unsafe_allow_html=True,
     )
+
+
+@st.fragment(run_every=5)
+def render_live_section(currency):
+    """
+    Self-refreshing block: reruns every 5 seconds without re-triggering the
+    full app (so models aren't retrained). Underlying data is still fetched
+    at most once per cache TTL (15-20s), so this animates the live view
+    without hammering the data source.
+    """
+    render_live_banner(currency)
+    gold_series = get_intraday_series(MARKET_SYMBOLS["Gold"])
+    silver_series = get_intraday_series(MARKET_SYMBOLS["Silver"])
+
+    t1, t2 = st.columns(2)
+    with t1:
+        st.markdown(
+            '<div class="ticker-label"><span class="live-dot"></span> Gold — Live</div>',
+            unsafe_allow_html=True,
+        )
+        st.plotly_chart(
+            create_ticker_sparkline(gold_series, currency, "#B8892E", "rgba(184,137,46,0.15)"),
+            use_container_width=True, config={"displayModeBar": False}, key="gold_spark",
+        )
+    with t2:
+        st.markdown(
+            '<div class="ticker-label"><span class="live-dot"></span> Silver — Live</div>',
+            unsafe_allow_html=True,
+        )
+        st.plotly_chart(
+            create_ticker_sparkline(silver_series, currency, "#6B7280", "rgba(107,114,128,0.15)"),
+            use_container_width=True, config={"displayModeBar": False}, key="silver_spark",
+        )
+
 
 
 # ==========================================================
@@ -1082,7 +1199,7 @@ def premium_report(metal, currency, investment, models, featured_data, performan
 # APP LAYOUT
 # ==========================================================
 
-header_col1, header_col2 = st.columns([3, 2], vertical_alignment="center")
+header_col1, header_col2 = st.columns([3, 1], vertical_alignment="center")
 with header_col1:
     st.markdown(
         f"""
@@ -1096,13 +1213,11 @@ with header_col1:
         unsafe_allow_html=True,
     )
 with header_col2:
-    live_row1, live_row2 = st.columns([4, 1], vertical_alignment="center")
-    with live_row2:
-        live_currency = st.selectbox(
-            "Live Market Currency", list(CURRENCIES.keys()), key="live_currency", label_visibility="collapsed"
-        )
-    with live_row1:
-        render_live_banner(live_currency)
+    live_currency = st.selectbox(
+        "Live Market Currency", list(CURRENCIES.keys()), key="live_currency", label_visibility="collapsed"
+    )
+
+render_live_section(live_currency)
 
 with st.spinner("Loading market data and training models..."):
     market_data = load_market_data()
