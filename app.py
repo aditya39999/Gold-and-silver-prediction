@@ -41,7 +41,7 @@ warnings.filterwarnings("ignore")
 # ==========================================================
 
 PROJECT_NAME = "Gold and Silver Prediction"
-VERSION = "1.1.0"
+VERSION = "1.2.0"
 
 RANDOM_STATE = 42
 DEFAULT_FORECAST_DAYS = 30
@@ -64,11 +64,11 @@ styles = getSampleStyleSheet()
 st.set_page_config(
     page_title=PROJECT_NAME,
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="collapsed",
 )
 
 # ==========================================================
-# STYLING (Cream and Gold Luxury Theme)
+# STYLING (Cream and Gold Luxury Theme with Glassmorphism)
 # ==========================================================
 
 CUSTOM_CSS = """
@@ -78,6 +78,13 @@ CUSTOM_CSS = """
 .block-container { padding-top: 1rem; max-width: 1400px; }
 div[data-testid="stAppViewBlockContainer"] { padding-top: 1rem; }
 div[data-testid="stDecoration"] { display: none; }
+
+/* Hide default streamlit sidebar for clean top navbar experience */
+[data-testid="stSidebar"] {
+    background: rgba(247, 241, 228, 0.95);
+    backdrop-filter: blur(10px);
+    border-right: 1px solid rgba(184,137,46,0.2);
+}
 
 .stApp {
     background: #F7F1E4;
@@ -94,62 +101,104 @@ h1, h2, h3, .app-header h1 {
     font-size: 18px;
 }
 
-/* Landing Page Hero & Cards Styles */
+/* Cinematic Hero Section */
 .landing-hero {
     text-align: center;
-    padding: 3rem 1rem 2rem 1rem;
+    padding: 3rem 1rem 1.5rem 1rem;
     position: relative;
+    background: radial-gradient(circle at center, rgba(232,197,106,0.15) 0%, rgba(247,241,228,0) 70%);
 }
 .landing-hero h1 {
-    font-size: 3.5rem;
+    font-size: 4rem;
     color: #5C4A32;
     margin-bottom: 0.5rem;
     letter-spacing: 0.04em;
-    animation: hero-fade 1.2s ease-out;
+    animation: hero-fade 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 .landing-subtitle {
-    font-size: 1.4rem;
+    font-size: 1.5rem;
     color: #8C6A2E;
     font-style: italic;
-    margin-bottom: 2rem;
-    animation: hero-fade 1.6s ease-out;
+    margin-bottom: 2.5rem;
+    animation: hero-fade 1.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 @keyframes hero-fade {
-    from { opacity: 0; transform: translateY(15px); }
+    from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }
 }
 
-.market-card-landing {
-    background: #FFFDF7;
-    border: 1px solid rgba(184,137,46,0.35);
+/* Glass-style interactive cards with hover lift, glow and scroll-reveal */
+.glass-card {
+    background: rgba(255, 253, 247, 0.85);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(184, 137, 46, 0.3);
     border-top: 5px solid #B8892E;
-    border-radius: 8px;
-    padding: 20px;
+    border-radius: 12px;
+    padding: 24px;
     text-align: center;
-    box-shadow: 0 4px 15px rgba(46,39,31,0.06);
-    transition: transform 0.3s ease;
+    box-shadow: 0 10px 30px rgba(46, 39, 31, 0.07);
+    transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    animation: card-reveal 0.8s ease both;
 }
-.market-card-landing:hover {
-    transform: translateY(-4px);
+.glass-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 15px 40px rgba(184, 137, 46, 0.2);
+    border-color: #B8892E;
 }
-.market-card-landing h3 {
+@keyframes card-reveal {
+    from { opacity: 0; transform: translateY(15px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.glass-card h3 {
+    font-family: 'Playfair Display', Georgia, serif;
+    color: #5C4A32;
+    margin-bottom: 12px;
+}
+
+/* Feature Grid Cards */
+.feature-glass-box {
+    background: rgba(255, 253, 247, 0.7);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(184, 137, 46, 0.25);
+    border-radius: 10px;
+    padding: 28px 22px;
+    text-align: center;
+    height: 100%;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 20px rgba(46,39,31,0.04);
+}
+.feature-glass-box:hover {
+    transform: translateY(-5px);
+    background: rgba(255, 253, 247, 0.95);
+    border-color: rgba(184, 137, 46, 0.6);
+    box-shadow: 0 8px 25px rgba(184,137,46,0.15);
+}
+.feature-icon {
+    font-size: 32px;
+    margin-bottom: 12px;
+    color: #B8892E;
+}
+.feature-glass-box h4 {
     font-family: 'Playfair Display', Georgia, serif;
     color: #5C4A32;
     margin-bottom: 10px;
+    font-size: 22px;
 }
 
-.feature-box {
-    background: #FFFDF7;
-    border: 1px solid rgba(184,137,46,0.2);
-    border-radius: 6px;
-    padding: 20px;
-    text-align: center;
-    height: 100%;
-}
-.feature-box h4 {
-    font-family: 'Playfair Display', Georgia, serif;
-    color: #8C6A2E;
-    margin-bottom: 8px;
+/* Clean Top Navigation Bar */
+.topnav-container {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 2rem;
+    padding: 10px;
+    background: rgba(239, 228, 205, 0.5);
+    backdrop-filter: blur(8px);
+    border-radius: 999px;
+    border: 1px solid rgba(184, 137, 46, 0.25);
+    max-width: 700px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .app-header {
@@ -173,12 +222,6 @@ h1, h2, h3, .app-header h1 {
     text-transform: uppercase;
     color: #8C6A2E;
     line-height: 1.2;
-}
-.app-header p {
-    color: #6B5D46;
-    margin: 2px 0 0 0;
-    font-size: 13px;
-    font-style: italic;
 }
 
 .metric-card {
@@ -256,6 +299,11 @@ h1, h2, h3, .app-header h1 {
     background: #B8892E;
     color: #FFFDF7;
     border: 1px solid #8C6A2E;
+    box-shadow: 0 4px 15px rgba(184,137,46,0.4);
+}
+.stButton > button[kind="primary"]:hover {
+    background: #8C6A2E;
+    box-shadow: 0 6px 20px rgba(184,137,46,0.6);
 }
 </style>
 """
@@ -601,29 +649,37 @@ def compute_market_pulse(metal, featured_data, performance):
 
 
 # ==========================================================
-# SIDEBAR NAVIGATION
+# LOAD MODELS & DATA ON STARTUP
 # ==========================================================
 
-st.sidebar.markdown(f"### **{PROJECT_NAME}**")
-nav_selection = st.sidebar.radio(
-    "Navigation",
-    ["Home", "Forecast", "Advisor", "Analytics", "About"],
-    index=["Home", "Forecast", "Advisor", "Analytics", "About"].index(st.session_state.active_nav)
-)
-st.session_state.active_nav = nav_selection
-
-# Load models on startup
 with st.spinner("Initializing market data & models..."):
     market_data = load_market_data()
     featured_data = build_featured_data(market_data)
     models, performance, performance_df, feature_importance, prediction_history = train_all_models()
 
 # ==========================================================
+# CLEAN TOP NAVIGATION BAR (Accessible Across All Views)
+# ==========================================================
+
+nav_options = ["Home", "Forecast", "Advisor", "Analytics", "About"]
+
+# Render top navigation bar buttons
+cols_nav = st.columns(len(nav_options))
+for i, opt in enumerate(nav_options):
+    with cols_nav[i]:
+        btn_type = "primary" if st.session_state.active_nav == opt else "secondary"
+        if st.button(opt, key=f"nav_btn_{opt}", use_container_width=True, type=btn_type):
+            st.session_state.active_nav = opt
+            st.rerun()
+
+st.markdown("<hr style='border-color:rgba(184,137,46,0.25); margin: 10px 0 20px 0;'>", unsafe_allow_html=True)
+
+# ==========================================================
 # PAGE ROUTING
 # ==========================================================
 
 if st.session_state.active_nav == "Home":
-    # Hero Heading
+    # Cinematic Hero Section
     st.markdown("""
         <div class="landing-hero">
             <h1>Intelligence Behind Precious Metals</h1>
@@ -646,7 +702,7 @@ if st.session_state.active_nav == "Home":
     col_g, col_s = st.columns(2)
     with col_g:
         st.markdown(f"""
-            <div class="market-card-landing">
+            <div class="glass-card">
                 <h3>Gold Futures (GC=F)</h3>
                 <h2 style="font-family:'Playfair Display',serif; color:#2E271F; margin:10px 0;">USD {gold_close:,.2f}</h2>
                 <div class="trend-pill {g_cls}">{g_arr} {gold_chg:+.2f}% (24H)</div>
@@ -656,7 +712,7 @@ if st.session_state.active_nav == "Home":
 
     with col_s:
         st.markdown(f"""
-            <div class="market-card-landing">
+            <div class="glass-card">
                 <h3>Silver Futures (SI=F)</h3>
                 <h2 style="font-family:'Playfair Display',serif; color:#2E271F; margin:10px 0;">USD {silver_close:,.2f}</h2>
                 <div class="trend-pill {s_cls}">{s_arr} {silver_chg:+.2f}% (24H)</div>
@@ -664,36 +720,39 @@ if st.session_state.active_nav == "Home":
         """, unsafe_allow_html=True)
         st.plotly_chart(create_mini_chart(silver_series, "#6B7280"), use_container_width=True, config={"displayModeBar": False})
 
-    # Central Call-to-Action Button
+    # Central Explore Markets Call-to-Action Button
     st.markdown("<br>", unsafe_allow_html=True)
     c_btn1, c_btn2, c_btn3 = st.columns([1, 2, 1])
     with c_btn2:
-        if st.button("Enter Market Intelligence →", type="primary", use_container_width=True):
+        if st.button("Explore Markets →", type="primary", use_container_width=True):
             st.session_state.active_nav = "Forecast"
             st.rerun()
 
     st.markdown("<br><hr style='border-color:rgba(184,137,46,0.2);'><br>", unsafe_allow_html=True)
 
-    # Three Features Section
+    # Three Glass Features Section
     st.markdown("<h3 style='text-align:center; font-family:Playfair Display,serif; margin-bottom:25px;'>Platform Architecture</h3>", unsafe_allow_html=True)
     f1, f2, f3 = st.columns(3)
     with f1:
         st.markdown("""
-            <div class="feature-box">
+            <div class="feature-glass-box">
+                <div class="feature-icon">⚡</div>
                 <h4>Live Markets</h4>
                 <p style="font-size:16px; color:#6B5D46;">Real-time intraday price tracking, sparkline feeds, and dynamic multi-currency conversions.</p>
             </div>
         """, unsafe_allow_html=True)
     with f2:
         st.markdown("""
-            <div class="feature-box">
+            <div class="feature-glass-box">
+                <div class="feature-icon">📈</div>
                 <h4>AI Forecasting</h4>
                 <p style="font-size:16px; color:#6B5D46;">Ensemble regression modeling combining Random Forest and Gradient Boosting architectures.</p>
             </div>
         """, unsafe_allow_html=True)
     with f3:
         st.markdown("""
-            <div class="feature-box">
+            <div class="feature-glass-box">
+                <div class="feature-icon">💎</div>
                 <h4>Intelligent Insights</h4>
                 <p style="font-size:16px; color:#6B5D46;">Automated signal generation, risk-reward grading, portfolio allocation, and automated reporting.</p>
             </div>
