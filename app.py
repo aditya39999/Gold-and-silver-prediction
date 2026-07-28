@@ -25,9 +25,6 @@ from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
 from sklearn.model_selection import TimeSeriesSplit
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
-import feedparser
-from textblob import TextBlob
-
 from reportlab.platypus import (
     SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
 )
@@ -41,7 +38,7 @@ warnings.filterwarnings("ignore")
 # ==========================================================
 
 PROJECT_NAME = "Gold and Silver Prediction"
-VERSION = "1.2.1"
+VERSION = "1.3.0"
 
 RANDOM_STATE = 42
 DEFAULT_FORECAST_DAYS = 30
@@ -68,7 +65,7 @@ st.set_page_config(
 )
 
 # ==========================================================
-# STYLING (Cream and Gold Luxury Theme with Glassmorphism)
+# STYLING (Cream and Gold Luxury Theme with Glassmorphism & Pulses)
 # ==========================================================
 
 CUSTOM_CSS = """
@@ -185,45 +182,6 @@ h1, h2, h3, .app-header h1 {
     font-size: 22px;
 }
 
-/* Clean Top Navigation Bar */
-.topnav-container {
-    display: flex;
-    justify-content: center;
-    gap: 15px;
-    margin-bottom: 2rem;
-    padding: 10px;
-    background: rgba(239, 228, 205, 0.5);
-    backdrop-filter: blur(8px);
-    border-radius: 999px;
-    border: 1px solid rgba(184, 137, 46, 0.25);
-    max-width: 700px;
-    margin-left: auto;
-    margin-right: auto;
-}
-
-.app-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 10px 24px;
-    padding: 14px 22px;
-    border-radius: 4px;
-    margin-bottom: 14px;
-    background: linear-gradient(120deg, #EFE4CD, #F7F1E4 60%, #EFE4CD);
-    border: 1px solid rgba(184,137,46,0.35);
-}
-.app-header .title-block { text-align: left; }
-.app-header h1 {
-    margin: 0;
-    font-size: 22px;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: #8C6A2E;
-    line-height: 1.2;
-}
-
 .metric-card {
     background: #FFFDF7;
     padding: 16px;
@@ -263,19 +221,48 @@ h1, h2, h3, .app-header h1 {
 .trend-pill.trend-down { background: rgba(166,73,58,0.14); color: #8C3A2C; }
 .trend-pill.trend-flat { background: rgba(140,122,84,0.14); color: #6B5D46; }
 
+/* Glowing Signal Badge with Pulse Ring */
 .signal-badge {
+    position: relative;
     display: inline-block;
     margin-top: 4px;
-    padding: 9px 20px;
+    padding: 9px 25px;
     border-radius: 8px;
     font-size: 20px;
     font-weight: 700;
     font-family: 'Playfair Display', Georgia, serif;
+    letter-spacing: 0.05em;
+    animation: badge-pop 0.4s cubic-bezier(.34,1.56,.64,1) both;
+    z-index: 1;
 }
-.signal-badge.signal-strong-buy { background: #33502F; color: #F7F1E4; }
-.signal-badge.signal-buy { background: #DCE8D8; color: #2E4A2A; border: 1px solid rgba(76,107,72,0.4); }
-.signal-badge.signal-hold { background: #F3E4C2; color: #7A5B1E; border: 1px solid rgba(184,137,46,0.4); }
-.signal-badge.signal-sell { background: #8C3A2C; color: #FBEDE9; }
+.signal-badge::before {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 12px;
+    z-index: -1;
+    animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+.signal-strong-buy { background: #33502F; color: #F7F1E4; box-shadow: 0 0 15px rgba(51,80,47,0.6); }
+.signal-strong-buy::before { border: 2px solid #33502F; }
+
+.signal-buy { background: #DCE8D8; color: #2E4A2A; border: 1px solid rgba(76,107,72,0.4); }
+.signal-buy::before { border: 2px solid #4C6B48; }
+
+.signal-hold { background: #F3E4C2; color: #7A5B1E; border: 1px solid rgba(184,137,46,0.4); }
+.signal-hold::before { border: 2px solid #B8892E; }
+
+.signal-sell { background: #8C3A2C; color: #FBEDE9; box-shadow: 0 0 15px rgba(140,58,44,0.6); }
+.signal-sell::before { border: 2px solid #8C3A2C; }
+
+@keyframes pulse-ring {
+    0% { transform: scale(0.8); opacity: 1; }
+    100% { transform: scale(1.3); opacity: 0; }
+}
+@keyframes badge-pop {
+    from { opacity: 0; transform: scale(0.85); }
+    to   { opacity: 1; transform: scale(1); }
+}
 
 .stButton > button, .stDownloadButton > button {
     background: #EFE4CD;
@@ -785,6 +772,39 @@ def create_forecast_chart(metal, forecast, featured_data, currency):
     )
     return fig
 
+def signal_reasoning(metal, stats, featured_data, performance, forecast_days):
+    df = featured_data[metal]
+    rsi = df["RSI"].iloc[-1]
+    macd = df["MACD"].iloc[-1]
+    macd_signal = df["MACD_SIGNAL"].iloc[-1]
+    dir_acc = performance[metal]["Directional Accuracy %"]
+
+    reasons = [
+        f"Model projects a {stats['Expected Return']:+.2f}% move over the next {forecast_days} days."
+    ]
+    if rsi >= 70:
+        reasons.append(f"RSI is {rsi:.0f} — overbought, which raises pullback risk.")
+    elif rsi <= 30:
+        reasons.append(f"RSI is {rsi:.0f} — oversold, which can favor a bounce.")
+    else:
+        reasons.append(f"RSI is {rsi:.0f} — neutral, no strong overbought/oversold pressure.")
+
+    if macd > macd_signal:
+        reasons.append("MACD is above its signal line (bullish crossover).")
+    else:
+        reasons.append("MACD is below its signal line (bearish crossover).")
+
+    reasons.append(
+        f"Historical directional accuracy for {metal} is {dir_acc:.1f}%, "
+        f"contributing to the {stats['Confidence']}% overall confidence score."
+    )
+    return reasons
+
+def stream_reasoning(reasons_list):
+    """Generator to simulate typewriter effect for AI reasoning"""
+    for r in reasons_list:
+        yield f"- {r}\n"
+        time.sleep(0.04)
 
 # ==========================================================
 # LOAD MODELS & DATA ON STARTUP
@@ -799,9 +819,8 @@ with st.spinner("Initializing market data & models..."):
 # CLEAN TOP NAVIGATION BAR (Accessible Across All Views)
 # ==========================================================
 
-nav_options = ["Home", "Forecast", "Advisor", "Analytics", "About"]
+nav_options = ["Home", "Forecast", "Compare", "Advisor", "Analytics", "About"]
 
-# Render top navigation bar buttons
 cols_nav = st.columns(len(nav_options))
 for i, opt in enumerate(nav_options):
     with cols_nav[i]:
@@ -817,7 +836,6 @@ st.markdown("<hr style='border-color:rgba(184,137,46,0.25); margin: 10px 0 20px 
 # ==========================================================
 
 if st.session_state.active_nav == "Home":
-    # Cinematic Hero Section
     st.markdown("""
         <div class="landing-hero">
             <h1>Intelligence Behind Precious Metals</h1>
@@ -825,7 +843,6 @@ if st.session_state.active_nav == "Home":
         </div>
     """, unsafe_allow_html=True)
 
-    # Two Large Interactive Gold and Silver Cards
     gold_close = featured_data["Gold"]["Close"].iloc[-1]
     silver_close = featured_data["Silver"]["Close"].iloc[-1]
     gold_chg = compute_24h_change(featured_data, "Gold")
@@ -858,7 +875,6 @@ if st.session_state.active_nav == "Home":
         """, unsafe_allow_html=True)
         st.plotly_chart(create_mini_chart(silver_series, "#6B7280"), use_container_width=True, config={"displayModeBar": False})
 
-    # Central Explore Markets Call-to-Action Button
     st.markdown("<br>", unsafe_allow_html=True)
     c_btn1, c_btn2, c_btn3 = st.columns([1, 2, 1])
     with c_btn2:
@@ -868,7 +884,6 @@ if st.session_state.active_nav == "Home":
 
     st.markdown("<br><hr style='border-color:rgba(184,137,46,0.2);'><br>", unsafe_allow_html=True)
 
-    # Three Glass Features Section
     st.markdown("<h3 style='text-align:center; font-family:Playfair Display,serif; margin-bottom:25px;'>Platform Architecture</h3>", unsafe_allow_html=True)
     f1, f2, f3 = st.columns(3)
     with f1:
@@ -898,7 +913,6 @@ if st.session_state.active_nav == "Home":
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # Today's Market Pulse Section
     st.markdown("<h3 style='text-align:center; font-family:Playfair Display,serif; margin-bottom:15px;'>Today’s Market Pulse</h3>", unsafe_allow_html=True)
     gp = compute_market_pulse("Gold", featured_data, performance)
     sp = compute_market_pulse("Silver", featured_data, performance)
@@ -934,8 +948,28 @@ elif st.session_state.active_nav == "Forecast":
         forecast_days = st.number_input("Forecast Days", min_value=7, max_value=90, value=DEFAULT_FORECAST_DAYS, step=1, key="forecast_days")
 
     stats = dashboard_metrics(metal, currency, models, featured_data, performance, forecast_days)
-    forecast = stats["Forecast"].copy()
-    forecast_display = forecast.copy()
+    base_forecast = stats["Forecast"].copy()
+    
+    # 🎛️ Scenario Simulator
+    st.markdown("<hr style='border-color:rgba(184,137,46,0.15); margin: 25px 0;'>", unsafe_allow_html=True)
+    st.markdown("### 🎛️ Scenario Simulator")
+    st.caption("Adjust macroeconomic sliders to view mathematical real-time curve bending on the forecast model.")
+    sim1, sim2, sim3 = st.columns(3)
+    with sim1:
+        usd_strength = st.slider("USD Strength Impact", min_value=-10.0, max_value=10.0, value=0.0, step=0.5, format="%+.1f%%")
+    with sim2:
+        inflation_shock = st.slider("Inflation Shock", min_value=0.0, max_value=15.0, value=0.0, step=0.5, format="+%.1f%%")
+    with sim3:
+        volatility_multi = st.slider("Market Volatility", min_value=0.5, max_value=2.0, value=1.0, step=0.1)
+
+    # Math application for Scenario adjustments
+    scenario_adjustment = (inflation_shock / 100) - (usd_strength / 100)
+    adjusted_forecast = base_forecast.copy()
+    adjusted_forecast["Forecast"] = adjusted_forecast["Forecast"] * (1 + scenario_adjustment)
+    noise = np.random.normal(0, 0.005 * volatility_multi, len(adjusted_forecast))
+    adjusted_forecast["Forecast"] = adjusted_forecast["Forecast"] * (1 + noise)
+
+    forecast_display = adjusted_forecast.copy()
     forecast_display["Forecast"] = forecast_display["Forecast"].apply(lambda x: round(convert_price(x, currency), 2))
 
     change_24h = compute_24h_change(featured_data, metal)
@@ -973,9 +1007,60 @@ elif st.session_state.active_nav == "Forecast":
             unsafe_allow_html=True,
         )
 
+    # 🤖 AI Typing Effect
+    with st.expander("Intelligence Reasoning", expanded=True):
+        reasons = signal_reasoning(metal, stats, featured_data, performance, forecast_days)
+        st.write_stream(stream_reasoning(reasons))
+
     st.markdown("<br>", unsafe_allow_html=True)
-    st.plotly_chart(create_forecast_chart(metal, forecast, featured_data, currency), use_container_width=True)
+    st.plotly_chart(create_forecast_chart(metal, adjusted_forecast, featured_data, currency), use_container_width=True)
+    
     st.dataframe(forecast_display, use_container_width=True)
+
+elif st.session_state.active_nav == "Compare":
+    st.subheader("Market Split-Screen Compare Mode")
+    
+    gold_data = featured_data["Gold"]["Close"]
+    silver_data = featured_data["Silver"]["Close"]
+    
+    # Compute Gold to Silver Ratio for side-by-side metric overlay
+    common_index = gold_data.index.intersection(silver_data.index)
+    ratio = gold_data[common_index] / silver_data[common_index]
+    
+    cm1, cm2 = st.columns(2)
+    with cm1:
+        st.markdown("<h3 style='text-align:center; color:#B8892E;'>Gold</h3>", unsafe_allow_html=True)
+        g_fig = create_mini_chart(gold_data.tail(90), "#B8892E")
+        g_fig.update_layout(height=250)
+        st.plotly_chart(g_fig, use_container_width=True)
+        
+    with cm2:
+        st.markdown("<h3 style='text-align:center; color:#6B7280;'>Silver</h3>", unsafe_allow_html=True)
+        s_fig = create_mini_chart(silver_data.tail(90), "#6B7280")
+        s_fig.update_layout(height=250)
+        st.plotly_chart(s_fig, use_container_width=True)
+
+    st.markdown("<hr style='border-color:rgba(184,137,46,0.15);'>", unsafe_allow_html=True)
+    st.markdown("### Historic Gold / Silver Ratio")
+    st.caption("A rising line means Gold is outperforming Silver. A falling line indicates Silver is outperforming Gold.")
+    
+    ratio_fig = go.Figure()
+    ratio_fig.add_trace(go.Scatter(
+        x=ratio.index, y=ratio.values, mode="lines",
+        line=dict(color="#8C6A2E", width=2),
+        fill="tozeroy", fillcolor="rgba(184,137,46,0.15)",
+        name="Ratio"
+    ))
+    ratio_fig.update_layout(
+        height=350,
+        margin=dict(l=30, r=30, t=10, b=10),
+        template="plotly_white",
+        paper_bgcolor="#FFFDF7",
+        plot_bgcolor="#FFFDF7",
+        showlegend=False
+    )
+    st.plotly_chart(ratio_fig, use_container_width=True)
+
 
 elif st.session_state.active_nav == "Advisor":
     st.subheader("Investment Advisor & Portfolio Tools")
