@@ -70,6 +70,234 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
+
+
+# ============================================================
+# V3 CINEMATIC INTRO — DATA -> METAL TRANSFORMATION
+# Replaces the old doorway transition with a continuous:
+# market noise -> Gold/Silver formation -> forecast beam reveal.
+# ============================================================
+def render_data_to_metal_intro():
+    import streamlit.components.v1 as components
+
+    if st.session_state.get("_data_metal_intro_seen", False):
+        return
+
+    intro_html = r"""
+    <div id="pm-intro">
+      <canvas id="pm-canvas"></canvas>
+
+      <button id="pm-skip" aria-label="Skip intro">Skip Intro</button>
+
+      <div class="pm-noise" id="pm-noise">
+        <span style="--x:8%;--y:18%;--d:0s">4047.32</span>
+        <span style="--x:20%;--y:72%;--d:.7s">RSI 45.8</span>
+        <span style="--x:31%;--y:29%;--d:1.4s">+0.17%</span>
+        <span style="--x:71%;--y:17%;--d:.4s">58.47</span>
+        <span style="--x:84%;--y:67%;--d:1.8s">MACD +</span>
+        <span style="--x:63%;--y:79%;--d:1.1s">SMA 50</span>
+        <span style="--x:47%;--y:13%;--d:2.1s">VOL 18.4</span>
+        <span style="--x:91%;--y:38%;--d:.9s">FORECAST</span>
+        <span style="--x:13%;--y:46%;--d:1.6s">30D</span>
+      </div>
+
+      <div class="pm-object pm-gold" id="pm-gold">
+        <div class="pm-shine"></div>
+        <div class="pm-metal-label">AU</div>
+      </div>
+
+      <div class="pm-object pm-silver" id="pm-silver">
+        <div class="pm-orbit"></div>
+        <div class="pm-metal-label">AG</div>
+      </div>
+
+      <main class="pm-copy" id="pm-copy">
+        <div class="pm-kicker">PRECIOUS METALS • MACHINE INTELLIGENCE</div>
+        <h1><span>FROM MARKET NOISE</span><b>TO MACHINE INTELLIGENCE</b></h1>
+        <p>Live market structure transformed into AI-assisted Gold & Silver forecasts.</p>
+
+        <div class="pm-live">
+          <div><small>GOLD</small><strong>$4,074.50</strong><em>▲ +0.17%</em></div>
+          <i></i>
+          <div><small>SILVER</small><strong>$58.47</strong><em class="down">▼ −0.31%</em></div>
+        </div>
+
+        <button id="pm-enter">
+          <span>ENTER MARKET</span>
+          <svg viewBox="0 0 24 24"><path d="M5 12h13M13 6l6 6-6 6"/></svg>
+        </button>
+        <div class="pm-caption">DATA → SIGNAL → MODEL → FUTURE</div>
+      </main>
+
+      <div class="pm-beam" id="pm-beam">
+        <svg viewBox="0 0 1200 260" preserveAspectRatio="none">
+          <path id="beam-path" d="M0,165 C110,150 150,188 245,137 S390,175 475,112 S620,145 705,96 S845,120 920,72 S1065,100 1200,34"/>
+        </svg>
+      </div>
+      <div class="pm-flash" id="pm-flash"></div>
+    </div>
+
+    <style>
+      html,body{margin:0;background:#080806;overflow:hidden}
+      #pm-intro{
+        position:fixed;inset:0;z-index:2147483647;overflow:hidden;
+        background:
+          radial-gradient(circle at 28% 48%,rgba(198,145,35,.16),transparent 27%),
+          radial-gradient(circle at 74% 47%,rgba(206,214,224,.10),transparent 26%),
+          linear-gradient(135deg,#050504 0%,#0b0a07 48%,#050505 100%);
+        color:#f4ead5;font-family:Arial,sans-serif;
+      }
+      #pm-intro:before{
+        content:"";position:absolute;inset:0;opacity:.13;pointer-events:none;
+        background-image:linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),
+                         linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);
+        background-size:48px 48px;
+        mask-image:radial-gradient(circle at center,#000,transparent 78%);
+      }
+      #pm-canvas{position:absolute;inset:0;width:100%;height:100%}
+      #pm-skip{
+        position:absolute;right:28px;top:24px;z-index:20;padding:10px 18px;border-radius:999px;
+        border:1px solid rgba(216,173,78,.42);background:rgba(10,10,8,.35);color:#d9c9a4;
+        letter-spacing:.08em;cursor:pointer;backdrop-filter:blur(12px)
+      }
+      .pm-noise span{
+        position:absolute;left:var(--x);top:var(--y);font:600 11px/1 monospace;color:#c9a24b;
+        opacity:.18;letter-spacing:.12em;animation:noiseFloat 5s ease-in-out var(--d) infinite alternate;
+      }
+      @keyframes noiseFloat{to{transform:translate3d(18px,-24px,0);opacity:.48}}
+      .pm-copy{
+        position:absolute;left:50%;top:50%;width:min(760px,78vw);transform:translate(-50%,-50%);
+        text-align:center;z-index:8;transition:opacity .55s ease,transform .8s cubic-bezier(.2,.8,.2,1)
+      }
+      .pm-kicker{font-size:11px;letter-spacing:.36em;color:#bba36e;margin-bottom:22px}
+      .pm-copy h1{margin:0;font-family:Georgia,serif;font-weight:400;line-height:.95}
+      .pm-copy h1 span{display:block;font-size:clamp(31px,4.8vw,70px);color:#f3ead7;letter-spacing:.02em}
+      .pm-copy h1 b{
+        display:block;margin-top:10px;font-size:clamp(33px,5.1vw,76px);font-weight:400;
+        background:linear-gradient(90deg,#8f6517,#f5d87c,#b57d1d,#f2e2ad);
+        -webkit-background-clip:text;color:transparent;background-size:200% auto;animation:goldFlow 4s linear infinite
+      }
+      @keyframes goldFlow{to{background-position:200% center}}
+      .pm-copy p{margin:25px auto 22px;color:#a9a394;font-size:15px;letter-spacing:.04em}
+      .pm-live{display:flex;justify-content:center;align-items:center;gap:25px;margin:26px auto 30px}
+      .pm-live div{display:grid;gap:5px;min-width:130px}
+      .pm-live small{font-size:9px;letter-spacing:.25em;color:#8d8779}
+      .pm-live strong{font-family:Georgia,serif;font-size:19px;font-weight:400;color:#efe6d3}
+      .pm-live em{font-style:normal;font-size:10px;color:#7ba17a}.pm-live em.down{color:#b77468}
+      .pm-live i{width:1px;height:35px;background:linear-gradient(transparent,#806b3e,transparent)}
+      #pm-enter{
+        position:relative;display:inline-flex;align-items:center;gap:16px;padding:15px 28px;
+        border:1px solid #8f6a20;border-radius:999px;color:#f2dfae;background:rgba(171,119,20,.11);
+        letter-spacing:.18em;font-size:11px;cursor:pointer;overflow:hidden;
+        box-shadow:0 0 45px rgba(185,132,26,.09);transition:.35s ease
+      }
+      #pm-enter:before{content:"";position:absolute;inset:-1px;transform:translateX(-110%);
+        background:linear-gradient(90deg,transparent,rgba(244,211,123,.22),transparent);transition:.65s}
+      #pm-enter:hover{transform:translateY(-2px);box-shadow:0 0 55px rgba(196,145,37,.2)}
+      #pm-enter:hover:before{transform:translateX(110%)}
+      #pm-enter svg{width:16px;fill:none;stroke:currentColor;stroke-width:1.5}
+      .pm-caption{margin-top:15px;color:#625b4c;font-size:8px;letter-spacing:.32em}
+      .pm-object{position:absolute;z-index:5;opacity:0;filter:blur(12px);transition:1.2s cubic-bezier(.2,.8,.2,1)}
+      .pm-gold{
+        width:175px;height:108px;left:8%;top:50%;border-radius:17px;transform:translateY(-50%) rotate(-9deg) scale(.55);
+        background:linear-gradient(135deg,#6f4306,#dcae43 32%,#fff0a8 48%,#a66b0e 72%,#efc75f);
+        box-shadow:inset 0 1px 12px #fff0a0,0 35px 90px rgba(201,144,29,.18)
+      }
+      .pm-silver{
+        width:135px;height:135px;right:10%;top:50%;border-radius:50%;transform:translateY(-50%) scale(.55);
+        background:radial-gradient(circle at 32% 28%,#fff,#cdd2d5 18%,#626970 53%,#e9ecee 72%,#747b80);
+        box-shadow:inset -18px -20px 40px rgba(0,0,0,.42),0 35px 90px rgba(190,200,210,.12)
+      }
+      .pm-metal-label{position:absolute;inset:0;display:grid;place-items:center;font:500 24px Georgia,serif;color:rgba(20,17,10,.58);letter-spacing:.12em}
+      .pm-shine{position:absolute;inset:0;border-radius:inherit;background:linear-gradient(110deg,transparent 20%,rgba(255,255,255,.55) 43%,transparent 61%);transform:translateX(-100%);animation:shine 3.6s 1.3s infinite}
+      @keyframes shine{70%,100%{transform:translateX(120%)}}
+      .pm-orbit{position:absolute;inset:-17px;border:1px solid rgba(215,221,225,.22);border-radius:50%;animation:orbit 6s linear infinite}
+      .pm-orbit:after{content:"";position:absolute;width:5px;height:5px;border-radius:50%;background:#e8ecee;top:14px;left:15px;box-shadow:0 0 14px #fff}
+      @keyframes orbit{to{transform:rotate(360deg)}}
+      #pm-intro.ready .pm-object{opacity:.95;filter:blur(0)}
+      #pm-intro.ready .pm-gold{transform:translateY(-50%) rotate(-9deg) scale(1)}
+      #pm-intro.ready .pm-silver{transform:translateY(-50%) scale(1)}
+      .pm-beam{position:absolute;left:0;right:0;bottom:11%;height:260px;opacity:0;z-index:12;pointer-events:none}
+      .pm-beam svg{width:100%;height:100%;overflow:visible}
+      #beam-path{fill:none;stroke:url(#x);stroke:#d8aa42;stroke-width:2;stroke-linecap:round;stroke-dasharray:1500;stroke-dashoffset:1500;filter:drop-shadow(0 0 8px rgba(229,180,65,.65))}
+      .pm-flash{position:absolute;inset:0;z-index:30;pointer-events:none;background:#f4dfaa;opacity:0}
+      #pm-intro.launch .pm-copy{opacity:0;transform:translate(-50%,-47%) scale(.96)}
+      #pm-intro.launch .pm-noise{opacity:0;transition:.4s}
+      #pm-intro.launch .pm-gold{left:44%;top:58%;transform:translate(-50%,-50%) rotate(18deg) scale(.08);opacity:0;filter:blur(8px)}
+      #pm-intro.launch .pm-silver{right:44%;top:58%;transform:translate(50%,-50%) scale(.08);opacity:0;filter:blur(8px)}
+      #pm-intro.launch .pm-beam{opacity:1;transition:opacity .25s .35s}
+      #pm-intro.launch #beam-path{animation:drawBeam 1.35s .38s cubic-bezier(.2,.7,.2,1) forwards}
+      @keyframes drawBeam{to{stroke-dashoffset:0}}
+      #pm-intro.exit{animation:introExit .85s ease forwards}
+      #pm-intro.exit .pm-flash{animation:flash .7s ease forwards}
+      @keyframes flash{35%{opacity:.22}100%{opacity:0}}
+      @keyframes introExit{65%{opacity:1;transform:scale(1.015)}100%{opacity:0;visibility:hidden;transform:scale(1.035)}}
+      @media(max-width:900px){.pm-object{display:none}.pm-copy{width:88vw}.pm-copy p{font-size:13px}}
+      @media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+    </style>
+
+    <script>
+      (() => {
+        const root = document.getElementById('pm-intro');
+        const canvas = document.getElementById('pm-canvas');
+        const ctx = canvas.getContext('2d');
+        let W=0,H=0,dpr=Math.min(devicePixelRatio||1,2), raf;
+        const particles=[];
+        function resize(){
+          W=innerWidth;H=innerHeight;canvas.width=W*dpr;canvas.height=H*dpr;
+          canvas.style.width=W+'px';canvas.style.height=H+'px';ctx.setTransform(dpr,0,0,dpr,0,0)
+        }
+        function seed(){
+          particles.length=0;
+          const n=Math.min(180,Math.floor(W/8));
+          for(let i=0;i<n;i++) particles.push({
+            x:Math.random()*W,y:Math.random()*H,
+            vx:(Math.random()-.5)*.16,vy:(Math.random()-.5)*.16,
+            r:Math.random()*1.35+.25,a:Math.random()*.42+.06,
+            metal:Math.random()>.52
+          });
+        }
+        function draw(){
+          ctx.clearRect(0,0,W,H);
+          for(const p of particles){
+            p.x+=p.vx;p.y+=p.vy;
+            if(p.x<0||p.x>W)p.vx*=-1;if(p.y<0||p.y>H)p.vy*=-1;
+            ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+            ctx.fillStyle=p.metal?`rgba(220,171,61,${p.a})`:`rgba(206,214,220,${p.a*.72})`;ctx.fill();
+          }
+          raf=requestAnimationFrame(draw);
+        }
+        resize();seed();draw();addEventListener('resize',()=>{resize();seed()});
+        setTimeout(()=>root.classList.add('ready'),250);
+
+        function leave(){
+          if(root.classList.contains('launch')) return;
+          root.classList.add('launch');
+          setTimeout(()=>root.classList.add('exit'),1750);
+          setTimeout(()=>{
+            cancelAnimationFrame(raf);
+            root.remove();
+            try{
+              window.parent.postMessage({type:'pm_intro_complete'}, '*');
+            }catch(e){}
+          },2550);
+        }
+        document.getElementById('pm-enter').addEventListener('click',leave);
+        document.getElementById('pm-skip').addEventListener('click',()=>{
+          root.classList.add('exit');
+          setTimeout(()=>{cancelAnimationFrame(raf);root.remove()},800);
+        });
+      })();
+    </script>
+    """
+    components.html(intro_html, height=900, scrolling=False)
+
+    # Streamlit reruns can otherwise replay an intro endlessly. Mark it seen
+    # for this browser session after the component is mounted.
+    st.session_state["_data_metal_intro_seen"] = True
+
+
+render_data_to_metal_intro()
 # ==========================================================
 # STYLING (cream and gold luxury theme, no emojis)
 # ==========================================================
@@ -856,7 +1084,7 @@ def render_cinematic_intro():
 
 
 if not st.session_state.intro_played:
-    render_cinematic_intro()
+    # Previous intro disabled in v3
     skip_clicked = st.button("Skip Intro", key="skip_intro_btn")
     # Mark as played immediately so the intro never replays this session,
     # whether it finishes on its own (~2.3s) or the user skips it.
@@ -2911,3 +3139,8 @@ st.markdown(
     </div>""",
     unsafe_allow_html=True,
 )
+
+
+# V3 note:
+# The old doorway intro implementation is intentionally left in this file for rollback,
+# but its render call is disabled above. The active experience is Data -> Metal.
