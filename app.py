@@ -8,6 +8,7 @@ Run locally with:
 
 import os
 import time
+import random
 import tempfile
 import warnings
 from datetime import datetime, timedelta
@@ -590,6 +591,140 @@ div.element-container:has(> div > div.chart-spacer) {
 """
 
 st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
+
+
+# ==========================================================
+# CINEMATIC DOORWAY INTRO (plays once per session)
+# ==========================================================
+
+if "intro_played" not in st.session_state:
+    st.session_state.intro_played = False
+
+
+def render_cinematic_intro():
+    """
+    Full-screen cream-and-gold double doors that swing open (with a touch of
+    3D via rotateY + perspective), a pulsing gold glow at the seam, a
+    handful of drifting gold particles, and the dashboard beneath blurring
+    into focus as the doors clear. Pure CSS keyframes so it needs no JS to
+    run or to clean itself up — everything fades to opacity:0 /
+    pointer-events:none at the end of its own animation.
+    """
+    particles_html = ""
+    for _ in range(22):
+        left = random.uniform(2, 98)
+        top = random.uniform(8, 92)
+        delay = random.uniform(0, 0.9)
+        size = random.uniform(2, 5)
+        particles_html += (
+            f'<span class="intro-particle" style="left:{left:.1f}%; top:{top:.1f}%; '
+            f'width:{size:.1f}px; height:{size:.1f}px; animation-delay:{delay:.2f}s;"></span>'
+        )
+
+    intro_html = f"""
+    <style>
+    .intro-overlay {{
+        position: fixed; inset: 0; z-index: 999999;
+        pointer-events: none;
+        perspective: 1800px;
+        overflow: hidden;
+    }}
+    .intro-door {{
+        position: absolute; top: 0; width: 50%; height: 100%;
+        background: linear-gradient(135deg, #FBF6E9 0%, #F0E4C8 45%, #B8892E 100%);
+        box-shadow: 0 0 90px rgba(184,137,46,0.5) inset, 0 0 40px rgba(184,137,46,0.35);
+        border: 1px solid rgba(184,137,46,0.4);
+    }}
+    .intro-door::after {{
+        content: "";
+        position: absolute; top: 0; bottom: 0; width: 6px;
+        background: linear-gradient(180deg, transparent, #B8892E 45%, #E8C56A 50%, #B8892E 55%, transparent);
+        box-shadow: 0 0 24px 4px rgba(232,197,106,0.7);
+    }}
+    .intro-door-left {{
+        left: 0; transform-origin: left center;
+        animation: door-open-left 2.3s cubic-bezier(.76,0,.2,1) forwards;
+    }}
+    .intro-door-left::after {{ right: -3px; }}
+    .intro-door-right {{
+        right: 0; transform-origin: right center;
+        animation: door-open-right 2.3s cubic-bezier(.76,0,.2,1) forwards;
+    }}
+    .intro-door-right::after {{ left: -3px; }}
+    @keyframes door-open-left {{
+        0%   {{ transform: translateX(0) rotateY(0deg); opacity: 1; }}
+        55%  {{ transform: translateX(-6%) rotateY(-22deg); opacity: 1; }}
+        100% {{ transform: translateX(-105%) rotateY(-72deg); opacity: 0; }}
+    }}
+    @keyframes door-open-right {{
+        0%   {{ transform: translateX(0) rotateY(0deg); opacity: 1; }}
+        55%  {{ transform: translateX(6%) rotateY(22deg); opacity: 1; }}
+        100% {{ transform: translateX(105%) rotateY(72deg); opacity: 0; }}
+    }}
+    .intro-glow {{
+        position: absolute; top: 50%; left: 50%; width: 340px; height: 340px;
+        transform: translate(-50%, -50%);
+        background: radial-gradient(circle, rgba(232,197,106,0.9) 0%, rgba(184,137,46,0.25) 45%, rgba(184,137,46,0) 70%);
+        filter: blur(18px);
+        animation: intro-glow-pulse 2.3s ease forwards;
+    }}
+    @keyframes intro-glow-pulse {{
+        0%   {{ opacity: 0; transform: translate(-50%, -50%) scale(0.25); }}
+        35%  {{ opacity: 1; transform: translate(-50%, -50%) scale(1.3); }}
+        100% {{ opacity: 0; transform: translate(-50%, -50%) scale(2.4); }}
+    }}
+    .intro-particle {{
+        position: absolute; border-radius: 50%;
+        background: #E8C56A;
+        box-shadow: 0 0 10px 3px rgba(232,197,106,0.75);
+        animation: intro-particle-float 2.2s ease-out forwards;
+        opacity: 0;
+    }}
+    @keyframes intro-particle-float {{
+        0%   {{ opacity: 0; transform: translateY(0) scale(0.5); }}
+        18%  {{ opacity: 1; }}
+        100% {{ opacity: 0; transform: translateY(-120px) scale(1.3); }}
+    }}
+    [data-testid="stAppViewBlockContainer"] {{
+        animation: intro-blur-focus 2.3s ease forwards;
+    }}
+    @keyframes intro-blur-focus {{
+        0%   {{ filter: blur(20px); transform: scale(1.025); }}
+        100% {{ filter: blur(0); transform: scale(1); }}
+    }}
+    .st-key-skip_intro_btn {{
+        position: fixed !important;
+        top: 22px; right: 28px;
+        z-index: 1000000 !important;
+        animation: card-rise 0.5s ease 0.3s both;
+    }}
+    .st-key-skip_intro_btn button {{
+        background: rgba(255,253,247,0.85) !important;
+        border: 1px solid rgba(184,137,46,0.6) !important;
+        color: #6B5D46 !important;
+        font-size: 13px !important;
+        padding: 0.3rem 0.9rem !important;
+        backdrop-filter: blur(4px);
+    }}
+    </style>
+    <div class="intro-overlay">
+        <div class="intro-glow"></div>
+        {particles_html}
+        <div class="intro-door intro-door-left"></div>
+        <div class="intro-door intro-door-right"></div>
+    </div>
+    """
+    st.markdown(intro_html, unsafe_allow_html=True)
+
+
+if not st.session_state.intro_played:
+    render_cinematic_intro()
+    skip_clicked = st.button("Skip Intro", key="skip_intro_btn")
+    # Mark as played immediately so the intro never replays this session,
+    # whether it finishes on its own (~2.3s) or the user skips it.
+    st.session_state.intro_played = True
+    if skip_clicked:
+        st.rerun()
 
 
 def animated_counter(value_text, prefix="", suffix="", color="#1F1811", size="27px", duration=900, key=""):
