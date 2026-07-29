@@ -71,338 +71,34 @@ st.set_page_config(
 )
 
 
-
-
-
-
-
-# ============================================================
-# V5 — INTRO COMPLETELY REMOVED
-# ============================================================
-st.markdown("""
-<style>
-/* Kill all legacy intro/door/splash layers. */
-#pm-intro,
-.cinematic-intro,
-.intro-overlay,
-.intro-screen,
-.splash-screen,
-.door-overlay,
-.doorway-overlay,
-[class*="cinematic-intro"],
-[class*="doorway"],
-[class*="intro-overlay"] {
-    display: none !important;
-    visibility: hidden !important;
-    opacity: 0 !important;
-    width: 0 !important;
-    height: 0 !important;
-    min-height: 0 !important;
-    max-height: 0 !important;
-    overflow: hidden !important;
-    pointer-events: none !important;
-}
-
-/* Remove iframe/component shells left by the custom cinematic intro. */
-iframe[title="streamlit_components.v1.html"] {
-    min-height: 0;
-}
-
-/* Never allow old animation state to fade the actual application. */
-.stApp,
-[data-testid="stAppViewContainer"],
-[data-testid="stMain"],
-[data-testid="stMainBlockContainer"],
-.main,
-.block-container {
-    opacity: 1 !important;
-    filter: none !important;
-    visibility: visible !important;
-}
-
-/* No blank top space from an intro placeholder. */
-[data-testid="stMainBlockContainer"] {
-    padding-top: 1.5rem !important;
-}
-</style>
-""", unsafe_allow_html=True)
-
-# ============================================================
-# CLEAN START V4
-# No cinematic doorway / splash screen. The application opens
-# immediately into the existing market dashboard/Home experience.
-# ============================================================
-st.markdown("""
-<style>
-/* Ensure no legacy intro overlay can cover or fade the dashboard. */
-#pm-intro,
-.cinematic-intro,
-.intro-overlay,
-.door-overlay,
-.doorway-overlay {
-    display: none !important;
-    visibility: hidden !important;
-    opacity: 0 !important;
-    pointer-events: none !important;
-}
-
-/* Defensive reset against the old washed-out animation state. */
-.stApp,
-[data-testid="stAppViewContainer"],
-[data-testid="stMain"],
-.main,
-.block-container {
-    opacity: 1 !important;
-    filter: none !important;
-}
-
-/* Keep the first screen clean and immediately usable. */
-html {
-    scroll-behavior: smooth;
-}
-</style>
-""", unsafe_allow_html=True)
-
-# ============================================================
-# V3 CINEMATIC INTRO — DATA -> METAL TRANSFORMATION
-# Replaces the old doorway transition with a continuous:
-# market noise -> Gold/Silver formation -> forecast beam reveal.
-# ============================================================
-def render_data_to_metal_intro():
-    import streamlit.components.v1 as components
-
-    if st.session_state.get("_data_metal_intro_seen", False):
-        return
-
-    intro_html = r"""
-    <div id="pm-intro">
-      <canvas id="pm-canvas"></canvas>
-
-      <button id="pm-skip" aria-label="Skip intro"></button>
-
-      <div class="pm-noise" id="pm-noise">
-        <span style="--x:8%;--y:18%;--d:0s">4047.32</span>
-        <span style="--x:20%;--y:72%;--d:.7s">RSI 45.8</span>
-        <span style="--x:31%;--y:29%;--d:1.4s">+0.17%</span>
-        <span style="--x:71%;--y:17%;--d:.4s">58.47</span>
-        <span style="--x:84%;--y:67%;--d:1.8s">MACD +</span>
-        <span style="--x:63%;--y:79%;--d:1.1s">SMA 50</span>
-        <span style="--x:47%;--y:13%;--d:2.1s">VOL 18.4</span>
-        <span style="--x:91%;--y:38%;--d:.9s">FORECAST</span>
-        <span style="--x:13%;--y:46%;--d:1.6s">30D</span>
-      </div>
-
-      <div class="pm-object pm-gold" id="pm-gold">
-        <div class="pm-shine"></div>
-        <div class="pm-metal-label">AU</div>
-      </div>
-
-      <div class="pm-object pm-silver" id="pm-silver">
-        <div class="pm-orbit"></div>
-        <div class="pm-metal-label">AG</div>
-      </div>
-
-      <main class="pm-copy" id="pm-copy">
-        <div class="pm-kicker">PRECIOUS METALS • MACHINE INTELLIGENCE</div>
-        <h1><span>FROM MARKET NOISE</span><b>TO MACHINE INTELLIGENCE</b></h1>
-        <p>Live market structure transformed into AI-assisted Gold & Silver forecasts.</p>
-
-        <div class="pm-live">
-          <div><small>GOLD</small><strong>$4,074.50</strong><em>▲ +0.17%</em></div>
-          <i></i>
-          <div><small>SILVER</small><strong>$58.47</strong><em class="down">▼ −0.31%</em></div>
-        </div>
-
-        <button id="pm-enter">
-          <span>ENTER MARKET</span>
-          <svg viewBox="0 0 24 24"><path d="M5 12h13M13 6l6 6-6 6"/></svg>
-        </button>
-        <div class="pm-caption">DATA → SIGNAL → MODEL → FUTURE</div>
-      </main>
-
-      <div class="pm-beam" id="pm-beam">
-        <svg viewBox="0 0 1200 260" preserveAspectRatio="none">
-          <path id="beam-path" d="M0,165 C110,150 150,188 245,137 S390,175 475,112 S620,145 705,96 S845,120 920,72 S1065,100 1200,34"/>
-        </svg>
-      </div>
-      <div class="pm-flash" id="pm-flash"></div>
-    </div>
-
-    <style>
-      html,body{margin:0;background:#080806;overflow:hidden}
-      #pm-intro{
-        position:fixed;inset:0;z-index:2147483647;overflow:hidden;
-        background:
-          radial-gradient(circle at 28% 48%,rgba(198,145,35,.16),transparent 27%),
-          radial-gradient(circle at 74% 47%,rgba(206,214,224,.10),transparent 26%),
-          linear-gradient(135deg,#050504 0%,#0b0a07 48%,#050505 100%);
-        color:#f4ead5;font-family:Arial,sans-serif;
-      }
-      #pm-intro:before{
-        content:"";position:absolute;inset:0;opacity:.13;pointer-events:none;
-        background-image:linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),
-                         linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);
-        background-size:48px 48px;
-        mask-image:radial-gradient(circle at center,#000,transparent 78%);
-      }
-      #pm-canvas{position:absolute;inset:0;width:100%;height:100%}
-      #pm-skip{
-        position:absolute;right:28px;top:24px;z-index:20;padding:10px 18px;border-radius:999px;
-        border:1px solid rgba(216,173,78,.42);background:rgba(10,10,8,.35);color:#d9c9a4;
-        letter-spacing:.08em;cursor:pointer;backdrop-filter:blur(12px)
-      }
-      .pm-noise span{
-        position:absolute;left:var(--x);top:var(--y);font:600 11px/1 monospace;color:#c9a24b;
-        opacity:.18;letter-spacing:.12em;animation:noiseFloat 5s ease-in-out var(--d) infinite alternate;
-      }
-      @keyframes noiseFloat{to{transform:translate3d(18px,-24px,0);opacity:.48}}
-      .pm-copy{
-        position:absolute;left:50%;top:50%;width:min(760px,78vw);transform:translate(-50%,-50%);
-        text-align:center;z-index:8;transition:opacity .55s ease,transform .8s cubic-bezier(.2,.8,.2,1)
-      }
-      .pm-kicker{font-size:11px;letter-spacing:.36em;color:#bba36e;margin-bottom:22px}
-      .pm-copy h1{margin:0;font-family:Georgia,serif;font-weight:400;line-height:.95}
-      .pm-copy h1 span{display:block;font-size:clamp(31px,4.8vw,70px);color:#f3ead7;letter-spacing:.02em}
-      .pm-copy h1 b{
-        display:block;margin-top:10px;font-size:clamp(33px,5.1vw,76px);font-weight:400;
-        background:linear-gradient(90deg,#8f6517,#f5d87c,#b57d1d,#f2e2ad);
-        -webkit-background-clip:text;color:transparent;background-size:200% auto;animation:goldFlow 4s linear infinite
-      }
-      @keyframes goldFlow{to{background-position:200% center}}
-      .pm-copy p{margin:25px auto 22px;color:#a9a394;font-size:15px;letter-spacing:.04em}
-      .pm-live{display:flex;justify-content:center;align-items:center;gap:25px;margin:26px auto 30px}
-      .pm-live div{display:grid;gap:5px;min-width:130px}
-      .pm-live small{font-size:9px;letter-spacing:.25em;color:#8d8779}
-      .pm-live strong{font-family:Georgia,serif;font-size:19px;font-weight:400;color:#efe6d3}
-      .pm-live em{font-style:normal;font-size:10px;color:#7ba17a}.pm-live em.down{color:#b77468}
-      .pm-live i{width:1px;height:35px;background:linear-gradient(transparent,#806b3e,transparent)}
-      #pm-enter{
-        position:relative;display:inline-flex;align-items:center;gap:16px;padding:15px 28px;
-        border:1px solid #8f6a20;border-radius:999px;color:#f2dfae;background:rgba(171,119,20,.11);
-        letter-spacing:.18em;font-size:11px;cursor:pointer;overflow:hidden;
-        box-shadow:0 0 45px rgba(185,132,26,.09);transition:.35s ease
-      }
-      #pm-enter:before{content:"";position:absolute;inset:-1px;transform:translateX(-110%);
-        background:linear-gradient(90deg,transparent,rgba(244,211,123,.22),transparent);transition:.65s}
-      #pm-enter:hover{transform:translateY(-2px);box-shadow:0 0 55px rgba(196,145,37,.2)}
-      #pm-enter:hover:before{transform:translateX(110%)}
-      #pm-enter svg{width:16px;fill:none;stroke:currentColor;stroke-width:1.5}
-      .pm-caption{margin-top:15px;color:#625b4c;font-size:8px;letter-spacing:.32em}
-      .pm-object{position:absolute;z-index:5;opacity:0;filter:blur(12px);transition:1.2s cubic-bezier(.2,.8,.2,1)}
-      .pm-gold{
-        width:175px;height:108px;left:8%;top:50%;border-radius:17px;transform:translateY(-50%) rotate(-9deg) scale(.55);
-        background:linear-gradient(135deg,#6f4306,#dcae43 32%,#fff0a8 48%,#a66b0e 72%,#efc75f);
-        box-shadow:inset 0 1px 12px #fff0a0,0 35px 90px rgba(201,144,29,.18)
-      }
-      .pm-silver{
-        width:135px;height:135px;right:10%;top:50%;border-radius:50%;transform:translateY(-50%) scale(.55);
-        background:radial-gradient(circle at 32% 28%,#fff,#cdd2d5 18%,#626970 53%,#e9ecee 72%,#747b80);
-        box-shadow:inset -18px -20px 40px rgba(0,0,0,.42),0 35px 90px rgba(190,200,210,.12)
-      }
-      .pm-metal-label{position:absolute;inset:0;display:grid;place-items:center;font:500 24px Georgia,serif;color:rgba(20,17,10,.58);letter-spacing:.12em}
-      .pm-shine{position:absolute;inset:0;border-radius:inherit;background:linear-gradient(110deg,transparent 20%,rgba(255,255,255,.55) 43%,transparent 61%);transform:translateX(-100%);animation:shine 3.6s 1.3s infinite}
-      @keyframes shine{70%,100%{transform:translateX(120%)}}
-      .pm-orbit{position:absolute;inset:-17px;border:1px solid rgba(215,221,225,.22);border-radius:50%;animation:orbit 6s linear infinite}
-      .pm-orbit:after{content:"";position:absolute;width:5px;height:5px;border-radius:50%;background:#e8ecee;top:14px;left:15px;box-shadow:0 0 14px #fff}
-      @keyframes orbit{to{transform:rotate(360deg)}}
-      #pm-intro.ready .pm-object{opacity:.95;filter:blur(0)}
-      #pm-intro.ready .pm-gold{transform:translateY(-50%) rotate(-9deg) scale(1)}
-      #pm-intro.ready .pm-silver{transform:translateY(-50%) scale(1)}
-      .pm-beam{position:absolute;left:0;right:0;bottom:11%;height:260px;opacity:0;z-index:12;pointer-events:none}
-      .pm-beam svg{width:100%;height:100%;overflow:visible}
-      #beam-path{fill:none;stroke:url(#x);stroke:#d8aa42;stroke-width:2;stroke-linecap:round;stroke-dasharray:1500;stroke-dashoffset:1500;filter:drop-shadow(0 0 8px rgba(229,180,65,.65))}
-      .pm-flash{position:absolute;inset:0;z-index:30;pointer-events:none;background:#f4dfaa;opacity:0}
-      #pm-intro.launch .pm-copy{opacity:0;transform:translate(-50%,-47%) scale(.96)}
-      #pm-intro.launch .pm-noise{opacity:0;transition:.4s}
-      #pm-intro.launch .pm-gold{left:44%;top:58%;transform:translate(-50%,-50%) rotate(18deg) scale(.08);opacity:0;filter:blur(8px)}
-      #pm-intro.launch .pm-silver{right:44%;top:58%;transform:translate(50%,-50%) scale(.08);opacity:0;filter:blur(8px)}
-      #pm-intro.launch .pm-beam{opacity:1;transition:opacity .25s .35s}
-      #pm-intro.launch #beam-path{animation:drawBeam 1.35s .38s cubic-bezier(.2,.7,.2,1) forwards}
-      @keyframes drawBeam{to{stroke-dashoffset:0}}
-      #pm-intro.exit{animation:introExit .85s ease forwards}
-      #pm-intro.exit .pm-flash{animation:flash .7s ease forwards}
-      @keyframes flash{35%{opacity:.22}100%{opacity:0}}
-      @keyframes introExit{65%{opacity:1;transform:scale(1.015)}100%{opacity:0;visibility:hidden;transform:scale(1.035)}}
-      @media(max-width:900px){.pm-object{display:none}.pm-copy{width:88vw}.pm-copy p{font-size:13px}}
-      @media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
-    </style>
-
-    <script>
-      (() => {
-        const root = document.getElementById('pm-intro');
-        const canvas = document.getElementById('pm-canvas');
-        const ctx = canvas.getContext('2d');
-        let W=0,H=0,dpr=Math.min(devicePixelRatio||1,2), raf;
-        const particles=[];
-        function resize(){
-          W=innerWidth;H=innerHeight;canvas.width=W*dpr;canvas.height=H*dpr;
-          canvas.style.width=W+'px';canvas.style.height=H+'px';ctx.setTransform(dpr,0,0,dpr,0,0)
-        }
-        function seed(){
-          particles.length=0;
-          const n=Math.min(180,Math.floor(W/8));
-          for(let i=0;i<n;i++) particles.push({
-            x:Math.random()*W,y:Math.random()*H,
-            vx:(Math.random()-.5)*.16,vy:(Math.random()-.5)*.16,
-            r:Math.random()*1.35+.25,a:Math.random()*.42+.06,
-            metal:Math.random()>.52
-          });
-        }
-        function draw(){
-          ctx.clearRect(0,0,W,H);
-          for(const p of particles){
-            p.x+=p.vx;p.y+=p.vy;
-            if(p.x<0||p.x>W)p.vx*=-1;if(p.y<0||p.y>H)p.vy*=-1;
-            ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
-            ctx.fillStyle=p.metal?`rgba(220,171,61,${p.a})`:`rgba(206,214,220,${p.a*.72})`;ctx.fill();
-          }
-          raf=requestAnimationFrame(draw);
-        }
-        resize();seed();draw();addEventListener('resize',()=>{resize();seed()});
-        setTimeout(()=>root.classList.add('ready'),250);
-
-        function leave(){
-          if(root.classList.contains('launch')) return;
-          root.classList.add('launch');
-          setTimeout(()=>root.classList.add('exit'),1750);
-          setTimeout(()=>{
-            cancelAnimationFrame(raf);
-            root.remove();
-            try{
-              window.parent.postMessage({type:'pm_intro_complete'}, '*');
-            }catch(e){}
-          },2550);
-        }
-        document.getElementById('pm-enter').addEventListener('click',leave);
-        document.getElementById('pm-skip').addEventListener('click',()=>{
-          root.classList.add('exit');
-          setTimeout(()=>{cancelAnimationFrame(raf);root.remove()},800);
-        });
-      })();
-    </script>
-    """
-    components.html(intro_html, height=900, scrolling=False)
-
-    # Streamlit reruns can otherwise replay an intro endlessly. Mark it seen
-    # for this browser session after the component is mounted.
-    st.session_state["_data_metal_intro_seen"] = True
-# Cinematic intro disabled: app now opens directly on the Home/dashboard experience.
 # ==========================================================
 # STYLING (cream and gold luxury theme, no emojis)
 # ==========================================================
 
 CUSTOM_CSS = """
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700;800&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&display=swap');
 
-.block-container { padding-top: 1rem; max-width: 1400px; }
-div[data-testid="stAppViewBlockContainer"] { padding-top: 1rem; }
-div[data-testid="stDecoration"] { display: none; }
+/* Hide Streamlit's default header/toolbar bar so it doesn't stack on top
+   of the app's own sticky tab navigation (this was creating the look of
+   two navigation bars). */
+header[data-testid="stHeader"] {
+    display: none !important;
+    height: 0 !important;
+}
+div[data-testid="stDecoration"] { display: none !important; }
+#MainMenu { visibility: hidden !important; }
+footer { visibility: hidden !important; }
+
+/* Widen the dashboard to use the full screen instead of a narrow centered column. */
+.block-container { padding-top: 0.6rem; max-width: 1600px; }
+div[data-testid="stAppViewBlockContainer"] { padding-top: 0.6rem; max-width: 1600px; }
+div[data-testid="stMainBlockContainer"] { padding-top: 0.6rem; max-width: 1600px; }
 
 .stApp {
     background: #F7F1E4;
     font-family: 'Cormorant Garamond', Georgia, serif;
-    font-size: 19px;
+    font-size: 20px;
 }
 
 h1, h2, h3, .app-header h1 {
@@ -410,31 +106,42 @@ h1, h2, h3, .app-header h1 {
 }
 
 .stApp, .stApp p, .stApp span, .stApp label, .stMarkdown, .stMarkdown p {
-    color: #2E271F;
-    font-size: 18px;
+    color: #1C170F;
+    font-size: 19px;
 }
 
 /* Widget labels (Metal, Currency, Investment Amount, etc.) */
 .stSelectbox label, .stNumberInput label, .stRadio label, .stTextInput label,
 [data-testid="stWidgetLabel"] p {
-    font-size: 17px !important;
-    font-weight: 600;
+    font-size: 18px !important;
+    font-weight: 700 !important;
+    color: #1C170F !important;
 }
 
 /* Text inside selects, number inputs, radio options */
 .stSelectbox div[data-baseweb="select"] *, .stNumberInput input,
 .stRadio label span, .stTextInput input {
-    font-size: 17px !important;
+    font-size: 18px !important;
+    font-weight: 600 !important;
+    color: #1C170F !important;
+}
+.stSelectbox div[data-baseweb="select"] > div {
+    border: 1.5px solid #8C6A2E !important;
+    background: #FFFDF7 !important;
+}
+.stNumberInput input, .stTextInput input {
+    border: 1.5px solid #8C6A2E !important;
+    background: #FFFDF7 !important;
 }
 
 /* Dataframes / tables */
 [data-testid="stDataFrame"] {
-    font-size: 16px;
+    font-size: 17px;
 }
 
 /* Markdown body text used for summaries and advisor output */
-.stMarkdown h3 { font-size: 22px; }
-.stMarkdown ul, .stMarkdown li { font-size: 18px; }
+.stMarkdown h3 { font-size: 23px; }
+.stMarkdown ul, .stMarkdown li { font-size: 19px; }
 
 .app-header {
     display: flex;
@@ -451,17 +158,17 @@ h1, h2, h3, .app-header h1 {
 .app-header .title-block { text-align: left; }
 .app-header h1 {
     margin: 0;
-    font-size: 22px;
-    font-weight: 600;
+    font-size: 24px;
+    font-weight: 800;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: #8C6A2E;
+    color: #6E4F16;
     line-height: 1.2;
 }
 .app-header p {
-    color: #6B5D46;
+    color: #4A3F2E;
     margin: 2px 0 0 0;
-    font-size: 13px;
+    font-size: 14px;
     font-style: italic;
     letter-spacing: 0.02em;
 }
@@ -480,9 +187,9 @@ h1, h2, h3, .app-header h1 {
 .metric-card.accent-good { border-top-color: #4C6B48; }
 .metric-card.accent-info { border-top-color: #3B6FA0; }
 .metric-card h4 {
-    color: #7A6B4E;
-    font-weight: 700;
-    font-size: 12px;
+    color: #5A4C30;
+    font-weight: 800;
+    font-size: 13px;
     margin: 0 0 8px 0;
     text-transform: uppercase;
     letter-spacing: 0.12em;
@@ -490,15 +197,15 @@ h1, h2, h3, .app-header h1 {
 }
 .metric-card h2 {
     margin: 0;
-    font-size: 27px;
-    font-weight: 700;
-    color: #1F1811;
+    font-size: 29px;
+    font-weight: 800;
+    color: #1C170F;
     font-family: 'Playfair Display', Georgia, serif;
 }
 .metric-card .metric-reason {
     margin-top: 8px;
-    font-size: 12px;
-    color: #6B5D46;
+    font-size: 13px;
+    color: #4A3F2E;
     line-height: 1.4;
 }
 
@@ -515,20 +222,21 @@ h1, h2, h3, .app-header h1 {
     margin-top: 9px;
     padding: 4px 11px;
     border-radius: 999px;
-    font-size: 13px;
-    font-weight: 700;
+    font-size: 14px;
+    font-weight: 800;
 }
-.trend-pill.trend-up { background: rgba(76,107,72,0.14); color: #385B34; }
-.trend-pill.trend-down { background: rgba(166,73,58,0.14); color: #8C3A2C; }
-.trend-pill.trend-flat { background: rgba(140,122,84,0.14); color: #6B5D46; }
+.trend-pill.trend-up { background: rgba(21,128,61,0.16); color: #15803D; }
+.trend-pill.trend-down { background: rgba(185,28,28,0.16); color: #B91C1C; }
+.trend-pill.trend-flat { background: rgba(140,122,84,0.16); color: #5A4C30; }
 
 /* Confidence progress bar, color-coded by tier, animated fill */
 .confidence-bar-wrap {
     margin-top: 10px;
-    height: 8px;
+    height: 12px;
     border-radius: 999px;
-    background: rgba(46,39,31,0.08);
+    background: rgba(46,39,31,0.10);
     overflow: hidden;
+    border: 1px solid rgba(46,39,31,0.08);
 }
 .confidence-bar-fill {
     height: 100%;
@@ -546,17 +254,17 @@ h1, h2, h3, .app-header h1 {
     margin-top: 8px;
     padding: 3px 10px;
     border-radius: 999px;
-    font-size: 11px;
-    font-weight: 700;
+    font-size: 12px;
+    font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 0.06em;
 }
 .accuracy-note {
     margin-top: 6px;
-    font-size: 12px;
-    color: #8C7A54;
+    font-size: 13px;
+    color: #5A4C30;
 }
-.accuracy-note b { color: #4A3F2E; }
+.accuracy-note b { color: #1C170F; }
 
 /* Recommendation shown as a solid colored badge instead of plain colored text,
    so BUY / HOLD / SELL are unmistakable at a glance */
@@ -571,10 +279,10 @@ h1, h2, h3, .app-header h1 {
     letter-spacing: 0.03em;
     animation: badge-pop 0.4s cubic-bezier(.34,1.56,.64,1) both;
 }
-.signal-badge.signal-strong-buy { background: #33502F; color: #F7F1E4; }
-.signal-badge.signal-buy { background: #DCE8D8; color: #2E4A2A; border: 1px solid rgba(76,107,72,0.4); }
+.signal-badge.signal-strong-buy { background: #15803D; color: #FFFFFF; }
+.signal-badge.signal-buy { background: #DCFCE7; color: #15803D; border: 1px solid rgba(21,128,61,0.5); }
 .signal-badge.signal-hold { background: #F3E4C2; color: #7A5B1E; border: 1px solid rgba(184,137,46,0.4); }
-.signal-badge.signal-sell { background: #8C3A2C; color: #FBEDE9; }
+.signal-badge.signal-sell { background: #B91C1C; color: #FFFFFF; }
 
 @keyframes badge-pop {
     from { opacity: 0; transform: scale(0.85); }
@@ -592,9 +300,9 @@ h1, h2, h3, .app-header h1 {
     letter-spacing: 0.04em;
     animation: badge-pop 0.4s cubic-bezier(.34,1.56,.64,1) both;
 }
-.pulse-badge.pulse-bullish { background: #33502F; color: #F7F1E4; }
+.pulse-badge.pulse-bullish { background: #15803D; color: #FFFFFF; }
 .pulse-badge.pulse-neutral { background: #F3E4C2; color: #7A5B1E; border: 1px solid rgba(184,137,46,0.4); }
-.pulse-badge.pulse-bearish { background: #8C3A2C; color: #FBEDE9; }
+.pulse-badge.pulse-bearish { background: #B91C1C; color: #FFFFFF; }
 
 .pulse-score-wrap {
     margin-top: 12px;
@@ -614,26 +322,27 @@ h1, h2, h3, .app-header h1 {
 .pulse-reason-list {
     margin-top: 10px;
     padding-left: 18px;
-    font-size: 15px;
+    font-size: 16px;
     line-height: 1.55;
 }
 .pulse-reason-list li { margin-bottom: 3px; }
 
 .live-banner {
     background: #FFFDF7;
-    padding: 8px 16px;
+    padding: 10px 18px;
     border-radius: 999px;
-    border: 1px solid rgba(184,137,46,0.3);
-    font-size: 14px;
+    border: 1.5px solid rgba(184,137,46,0.45);
+    font-size: 15px;
     display: flex;
     gap: 18px;
     flex-wrap: wrap;
     align-items: center;
 }
 .live-banner .live-item { text-align: left; line-height: 1.25; white-space: nowrap; }
-.live-banner .live-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: #8C7A54; }
+.live-banner .live-label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: #5A4C30; font-weight: 700; }
 .live-banner .live-value {
-    font-weight: 700;
+    font-weight: 800;
+    font-size: 17px;
     display: inline-block;
     transition: color 0.3s ease;
 }
@@ -641,33 +350,33 @@ h1, h2, h3, .app-header h1 {
 .live-banner .live-value.flash-down { animation: flash-red 0.9s ease; }
 
 @keyframes flash-green {
-    0%   { background-color: rgba(76,107,72,0.35); }
-    100% { background-color: rgba(76,107,72,0); }
+    0%   { background-color: rgba(21,128,61,0.35); }
+    100% { background-color: rgba(21,128,61,0); }
 }
 @keyframes flash-red {
-    0%   { background-color: rgba(166,73,58,0.35); }
-    100% { background-color: rgba(166,73,58,0); }
+    0%   { background-color: rgba(185,28,28,0.35); }
+    100% { background-color: rgba(185,28,28,0); }
 }
 
 .live-dot {
     display: inline-block;
-    width: 8px;
-    height: 8px;
+    width: 9px;
+    height: 9px;
     border-radius: 50%;
-    background: #4C6B48;
-    box-shadow: 0 0 0 rgba(76,107,72,0.6);
+    background: #15803D;
+    box-shadow: 0 0 0 rgba(21,128,61,0.6);
     animation: live-pulse 1.6s infinite;
     flex-shrink: 0;
 }
 @keyframes live-pulse {
-    0%   { box-shadow: 0 0 0 0 rgba(76,107,72,0.55); }
-    70%  { box-shadow: 0 0 0 7px rgba(76,107,72,0); }
-    100% { box-shadow: 0 0 0 0 rgba(76,107,72,0); }
+    0%   { box-shadow: 0 0 0 0 rgba(21,128,61,0.55); }
+    70%  { box-shadow: 0 0 0 8px rgba(21,128,61,0); }
+    100% { box-shadow: 0 0 0 0 rgba(21,128,61,0); }
 }
 .ticker-label {
-    font-size: 12px;
-    font-weight: 600;
-    color: #6B5D46;
+    font-size: 13px;
+    font-weight: 700;
+    color: #4A3F2E;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -692,17 +401,17 @@ h1, h2, h3, .app-header h1 {
     gap: 3px;
     padding: 2px 9px;
     border-radius: 999px;
-    font-size: 12px;
-    font-weight: 700;
+    font-size: 13px;
+    font-weight: 800;
 }
-.ticker-change.trend-up { background: rgba(76,107,72,0.14); color: #385B34; }
-.ticker-change.trend-down { background: rgba(166,73,58,0.14); color: #8C3A2C; }
-.ticker-change.trend-flat { background: rgba(140,122,84,0.14); color: #6B5D46; }
+.ticker-change.trend-up { background: rgba(21,128,61,0.16); color: #15803D; }
+.ticker-change.trend-down { background: rgba(185,28,28,0.16); color: #B91C1C; }
+.ticker-change.trend-flat { background: rgba(140,122,84,0.16); color: #5A4C30; }
 .ticker-window {
-    font-size: 10px;
-    font-weight: 700;
-    color: #8C7A54;
-    background: rgba(140,122,84,0.12);
+    font-size: 11px;
+    font-weight: 800;
+    color: #5A4C30;
+    background: rgba(140,122,84,0.14);
     padding: 2px 8px;
     border-radius: 999px;
     text-transform: uppercase;
@@ -710,8 +419,8 @@ h1, h2, h3, .app-header h1 {
 }
 
 .disclaimer {
-    font-size: 12px;
-    color: #8C7A54;
+    font-size: 13px;
+    color: #5A4C30;
     margin-top: 12px;
     font-style: italic;
 }
@@ -719,13 +428,13 @@ h1, h2, h3, .app-header h1 {
 /* Buttons styled as gold pill buttons */
 .stButton > button, .stDownloadButton > button {
     background: #EFE4CD;
-    color: #2E271F;
-    border: 1px solid #B8892E;
+    color: #1C170F;
+    border: 1.5px solid #B8892E;
     border-radius: 999px;
     font-family: 'Cormorant Garamond', Georgia, serif;
     letter-spacing: 0.05em;
-    font-weight: 600;
-    font-size: 17px;
+    font-weight: 700;
+    font-size: 18px;
     padding: 0.5rem 1.2rem;
     transition: transform 0.15s ease, background 0.15s ease;
 }
@@ -750,16 +459,17 @@ h1, h2, h3, .app-header h1 {
 }
 .stTabs [data-baseweb="tab"] {
     font-family: 'Cormorant Garamond', Georgia, serif;
-    font-size: 19px;
+    font-size: 20px;
+    font-weight: 600;
     letter-spacing: 0.04em;
-    color: #6B5D46;
+    color: #4A3F2E;
 }
 .stTabs [aria-selected="true"] {
-    color: #8C6A2E !important;
-    font-weight: 700;
+    color: #6E4F16 !important;
+    font-weight: 800;
 }
 .stTabs [data-baseweb="tab"] p {
-    font-size: 19px;
+    font-size: 20px;
 }
 
 /* Native st.metric cards, restyled to match the cream/gold theme */
@@ -774,17 +484,19 @@ h1, h2, h3, .app-header h1 {
     font-family: 'Cormorant Garamond', Georgia, serif;
     text-transform: uppercase;
     letter-spacing: 0.1em;
-    font-size: 13px !important;
-    color: #8C7A54 !important;
+    font-size: 14px !important;
+    color: #5A4C30 !important;
+    font-weight: 700 !important;
 }
 [data-testid="stMetricValue"] {
     font-family: 'Playfair Display', Georgia, serif;
-    font-size: 26px !important;
-    color: #2E271F !important;
+    font-size: 28px !important;
+    color: #1C170F !important;
+    font-weight: 800 !important;
 }
 [data-testid="stMetricDelta"] {
-    font-size: 13px !important;
-    font-weight: 600;
+    font-size: 14px !important;
+    font-weight: 700;
 }
 
 /* "Why this recommendation?" expander: force high-contrast cream/gold styling
@@ -798,7 +510,7 @@ h1, h2, h3, .app-header h1 {
 }
 [data-testid="stExpander"] summary {
     background: #FFFDF7 !important;
-    color: #2E271F !important;
+    color: #1C170F !important;
     border-radius: 6px !important;
     padding: 8px 12px !important;
 }
@@ -808,13 +520,13 @@ h1, h2, h3, .app-header h1 {
 [data-testid="stExpander"] summary p,
 [data-testid="stExpander"] summary span,
 [data-testid="stExpander"] summary svg {
-    color: #2E271F !important;
-    fill: #2E271F !important;
-    font-weight: 600 !important;
+    color: #1C170F !important;
+    fill: #1C170F !important;
+    font-weight: 700 !important;
 }
 [data-testid="stExpanderDetails"] {
     background: #FFFDF7 !important;
-    color: #2E271F !important;
+    color: #1C170F !important;
 }
 
 /* Tight spacer used to pull the forecast chart closer to the expander above it */
@@ -862,12 +574,12 @@ div.element-container:has(> div > div.chart-spacer) {
     left: 50%;
     transform: translateX(-50%);
     width: 250px;
-    background: #2E271F;
+    background: #1C170F;
     color: #F7F1E4;
     text-align: left;
     padding: 10px 12px;
     border-radius: 6px;
-    font-size: 12.5px;
+    font-size: 13px;
     font-weight: 400;
     font-family: 'Cormorant Garamond', Georgia, serif;
     line-height: 1.45;
@@ -883,7 +595,7 @@ div.element-container:has(> div > div.chart-spacer) {
     margin-left: -5px;
     border-width: 5px;
     border-style: solid;
-    border-color: #2E271F transparent transparent transparent;
+    border-color: #1C170F transparent transparent transparent;
 }
 .info-tooltip:hover .tooltip-text {
     visibility: visible;
@@ -914,24 +626,25 @@ div.element-container:has(> div > div.chart-spacer) {
     filter: none !important;
 }
 
-/* Sticky primary navigation */
+/* Sticky primary navigation (single nav bar now that the default Streamlit
+   header is hidden above, so it can sit flush at the very top). */
 .stTabs [data-baseweb="tab-list"] {
     position: sticky;
-    top: 2.9rem;
+    top: 0;
     z-index: 900;
-    background: rgba(247,241,228,0.94);
+    background: rgba(247,241,228,0.97);
     backdrop-filter: blur(14px);
     -webkit-backdrop-filter: blur(14px);
-    padding: 8px 10px;
-    border: 1px solid rgba(184,137,46,.24);
+    padding: 10px 12px;
+    border: 1px solid rgba(184,137,46,.3);
     border-radius: 14px;
-    box-shadow: 0 8px 24px rgba(46,39,31,.06);
+    box-shadow: 0 8px 24px rgba(46,39,31,.08);
     gap: 3px;
 }
 .stTabs [data-baseweb="tab"] {
     border-radius: 999px;
-    padding-left: 14px !important;
-    padding-right: 14px !important;
+    padding-left: 16px !important;
+    padding-right: 16px !important;
 }
 .stTabs [data-baseweb="tab"]:nth-last-child(2) {
     background: linear-gradient(135deg,#2A241B,#171714);
@@ -953,10 +666,10 @@ div.element-container:has(> div > div.chart-spacer) {
     margin: 10px 0 12px;
 }
 .forecast-command-title {
-    font-size: 11px;
+    font-size: 12px;
     text-transform: uppercase;
     letter-spacing: .22em;
-    color: #8C6A2E;
+    color: #6E4F16;
     font-weight: 800;
 }
 
@@ -974,63 +687,78 @@ div.element-container:has(> div > div.chart-spacer) {
     box-shadow:0 10px 28px rgba(23,23,20,.12);
 }
 .market-pulse-strip .pulse-kicker {
-    color:#BDAE8D;font-size:10px;letter-spacing:.16em;text-transform:uppercase;
+    color:#D8CBA6;font-size:11px;letter-spacing:.16em;text-transform:uppercase;font-weight:700;
 }
 .market-pulse-strip .pulse-value {
-    font-family:'Playfair Display',Georgia,serif;font-size:18px;font-weight:700;margin-top:2px;
+    font-family:'Playfair Display',Georgia,serif;font-size:19px;font-weight:800;margin-top:2px;
 }
 .market-pulse-strip .gold-value {color:#E8C56A}
-.market-pulse-strip .silver-value {color:#D8DCE2}
+.market-pulse-strip .silver-value {color:#E7EAEE}
 
 /* Hero prediction */
 .prediction-hero {
     background:#FFFDF7;
-    border:1px solid rgba(184,137,46,.34);
-    border-top:3px solid #B8892E;
-    border-radius:14px;
-    min-height:195px;
-    padding:22px 24px;
-    box-shadow:0 10px 28px rgba(46,39,31,.06);
+    border:1.5px solid rgba(184,137,46,.4);
+    border-top:5px solid #B8892E;
+    border-radius:16px;
+    min-height:230px;
+    padding:26px 28px;
+    box-shadow:0 10px 28px rgba(46,39,31,.08);
 }
 .prediction-hero .eyebrow {
-    font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#8C7A54;font-weight:800;
+    font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:#5A4C30;font-weight:800;
 }
 .prediction-flow {
-    display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:18px 0 10px;
+    display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin:22px 0 14px;
 }
 .prediction-flow .price {
-    font-family:'Playfair Display',Georgia,serif;font-size:29px;font-weight:700;color:#2E271F;
+    font-family:'Playfair Display',Georgia,serif;font-size:44px;font-weight:800;color:#1C170F;
+    line-height: 1.1;
 }
-.prediction-flow .arrow {font-size:25px;color:#B8892E}
-.prediction-meta {display:flex;gap:8px;flex-wrap:wrap;margin-top:13px}
+.prediction-flow .price.current { color: #6B5D46; font-size: 30px; }
+.prediction-flow .arrow {font-size:30px;color:#B8892E}
+.prediction-meta {display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
 .prediction-chip {
-    border-radius:999px;padding:6px 10px;font-size:12px;font-weight:800;
+    border-radius:999px;padding:8px 14px;font-size:14px;font-weight:800;
     background:#F2E6D8;color:#8E382C;
 }
 .prediction-chip.dark {background:#171714;color:#E8C56A}
-.prediction-chip.soft {background:#ECEDE7;color:#355E3B}
+.prediction-chip.soft {background:#ECEDE7;color:#1E4222}
+.prediction-chip.up { background: rgba(21,128,61,0.14); color: #15803D; }
+.prediction-chip.down { background: rgba(185,28,28,0.14); color: #B91C1C; }
 
-/* AI signal card */
+/* AI signal card — the main focal point (BUY/SELL/HOLD) */
 .ai-signal-card {
-    min-height:195px;
-    border-radius:14px;
-    padding:22px 22px;
+    min-height:230px;
+    border-radius:16px;
+    padding:26px 26px;
     color:#F7F1E4;
+    box-shadow:0 16px 40px rgba(23,23,20,.22);
+    border: 2px solid rgba(232,197,106,.3);
+}
+.ai-signal-card.signal-bg-buy {
+    background: linear-gradient(145deg,#1B5E32,#0E3D20);
+    border-color: rgba(74,222,128,.55);
+}
+.ai-signal-card.signal-bg-sell {
+    background: linear-gradient(145deg,#7A1F1F,#4A1010);
+    border-color: rgba(248,113,113,.55);
+}
+.ai-signal-card.signal-bg-hold {
     background:
       radial-gradient(circle at 85% 15%,rgba(184,137,46,.23),transparent 32%),
       linear-gradient(145deg,#24211C,#171714);
-    border:1px solid rgba(232,197,106,.42);
-    box-shadow:0 14px 34px rgba(23,23,20,.16);
 }
-.ai-signal-card .eyebrow {color:#BDAE8D;font-size:11px;letter-spacing:.18em;text-transform:uppercase}
-.ai-signal-card .signal {font-family:'Playfair Display',Georgia,serif;font-size:38px;color:#E8C56A;margin:10px 0 4px}
-.ai-signal-card .sub {font-size:13px;color:#D7CCB5;line-height:1.55}
+.ai-signal-card .eyebrow {color:#E8DFC9;font-size:12px;letter-spacing:.2em;text-transform:uppercase;font-weight:800}
+.ai-signal-card .signal {font-family:'Playfair Display',Georgia,serif;font-size:46px;font-weight:800;color:#FFFFFF;margin:10px 0 6px;letter-spacing:.02em}
+.ai-signal-card .sub {font-size:15px;color:#F1EBDD;line-height:1.6}
 .ai-signal-card .beam {
-    height:5px;border-radius:999px;background:#34322D;margin:16px 0 8px;overflow:hidden;
+    height:10px;border-radius:999px;background:rgba(0,0,0,.28);margin:18px 0 10px;overflow:hidden;
+    border: 1px solid rgba(255,255,255,.15);
 }
 .ai-signal-card .beam > span {
     display:block;height:100%;border-radius:999px;
-    background:linear-gradient(90deg,#8C6A2E,#E8C56A);
+    background:linear-gradient(90deg,#E8C56A,#FFFFFF);
 }
 
 /* Advanced / Future Lab terminal layer */
@@ -1046,140 +774,6 @@ div.element-container:has(> div > div.chart-spacer) {
 """
 
 st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
-
-
-# ==========================================================
-# CINEMATIC DOORWAY INTRO (plays once per session)
-# ==========================================================
-
-if "intro_played" not in st.session_state:
-    st.session_state.intro_played = False
-
-
-def render_cinematic_intro():
-    """
-    Full-screen cream-and-gold double doors that swing open (with a touch of
-    3D via rotateY + perspective), a pulsing gold glow at the seam, a
-    handful of drifting gold particles, and the dashboard beneath blurring
-    into focus as the doors clear. Pure CSS keyframes so it needs no JS to
-    run or to clean itself up — everything fades to opacity:0 /
-    pointer-events:none at the end of its own animation.
-    """
-    particles_html = ""
-    for _ in range(22):
-        left = random.uniform(2, 98)
-        top = random.uniform(8, 92)
-        delay = random.uniform(0, 0.9)
-        size = random.uniform(2, 5)
-        particles_html += (
-            f'<span class="intro-particle" style="left:{left:.1f}%; top:{top:.1f}%; '
-            f'width:{size:.1f}px; height:{size:.1f}px; animation-delay:{delay:.2f}s;"></span>'
-        )
-
-    intro_html = f"""
-    <style>
-    .intro-overlay {{
-        position: fixed; inset: 0; z-index: 999999;
-        pointer-events: none;
-        perspective: 1800px;
-        overflow: hidden;
-    }}
-    .intro-door {{
-        position: absolute; top: 0; width: 50%; height: 100%;
-        background: linear-gradient(135deg, #FBF6E9 0%, #F0E4C8 45%, #B8892E 100%);
-        box-shadow: 0 0 90px rgba(184,137,46,0.5) inset, 0 0 40px rgba(184,137,46,0.35);
-        border: 1px solid rgba(184,137,46,0.4);
-    }}
-    .intro-door::after {{
-        content: "";
-        position: absolute; top: 0; bottom: 0; width: 6px;
-        background: linear-gradient(180deg, transparent, #B8892E 45%, #E8C56A 50%, #B8892E 55%, transparent);
-        box-shadow: 0 0 24px 4px rgba(232,197,106,0.7);
-    }}
-    .intro-door-left {{
-        left: 0; transform-origin: left center;
-        animation: door-open-left 2.3s cubic-bezier(.76,0,.2,1) forwards;
-    }}
-    .intro-door-left::after {{ right: -3px; }}
-    .intro-door-right {{
-        right: 0; transform-origin: right center;
-        animation: door-open-right 2.3s cubic-bezier(.76,0,.2,1) forwards;
-    }}
-    .intro-door-right::after {{ left: -3px; }}
-    @keyframes door-open-left {{
-        0%   {{ transform: translateX(0) rotateY(0deg); opacity: 1; }}
-        55%  {{ transform: translateX(-6%) rotateY(-22deg); opacity: 1; }}
-        100% {{ transform: translateX(-105%) rotateY(-72deg); opacity: 0; }}
-    }}
-    @keyframes door-open-right {{
-        0%   {{ transform: translateX(0) rotateY(0deg); opacity: 1; }}
-        55%  {{ transform: translateX(6%) rotateY(22deg); opacity: 1; }}
-        100% {{ transform: translateX(105%) rotateY(72deg); opacity: 0; }}
-    }}
-    .intro-glow {{
-        position: absolute; top: 50%; left: 50%; width: 340px; height: 340px;
-        transform: translate(-50%, -50%);
-        background: radial-gradient(circle, rgba(232,197,106,0.9) 0%, rgba(184,137,46,0.25) 45%, rgba(184,137,46,0) 70%);
-        filter: blur(18px);
-        animation: intro-glow-pulse 2.3s ease forwards;
-    }}
-    @keyframes intro-glow-pulse {{
-        0%   {{ opacity: 0; transform: translate(-50%, -50%) scale(0.25); }}
-        35%  {{ opacity: 1; transform: translate(-50%, -50%) scale(1.3); }}
-        100% {{ opacity: 0; transform: translate(-50%, -50%) scale(2.4); }}
-    }}
-    .intro-particle {{
-        position: absolute; border-radius: 50%;
-        background: #E8C56A;
-        box-shadow: 0 0 10px 3px rgba(232,197,106,0.75);
-        animation: intro-particle-float 2.2s ease-out forwards;
-        opacity: 0;
-    }}
-    @keyframes intro-particle-float {{
-        0%   {{ opacity: 0; transform: translateY(0) scale(0.5); }}
-        18%  {{ opacity: 1; }}
-        100% {{ opacity: 0; transform: translateY(-120px) scale(1.3); }}
-    }}
-    /* Do not animate/filter the Streamlit app container itself.
-       This prevents reruns from leaving dashboard content faded or blurred. */
-    [data-testid="stAppViewBlockContainer"] {{
-        filter: none !important;
-        opacity: 1 !important;
-        transform: none !important;
-    }}
-    .st-key-skip_intro_btn {{
-        position: fixed !important;
-        top: 22px; right: 28px;
-        z-index: 1000000 !important;
-        animation: card-rise 0.5s ease 0.3s both;
-    }}
-    .st-key-skip_intro_btn button {{
-        background: rgba(255,253,247,0.85) !important;
-        border: 1px solid rgba(184,137,46,0.6) !important;
-        color: #6B5D46 !important;
-        font-size: 13px !important;
-        padding: 0.3rem 0.9rem !important;
-        backdrop-filter: blur(4px);
-    }}
-    </style>
-    <div class="intro-overlay">
-        <div class="intro-glow"></div>
-        {particles_html}
-        <div class="intro-door intro-door-left"></div>
-        <div class="intro-door intro-door-right"></div>
-    </div>
-    """
-    st.markdown(intro_html, unsafe_allow_html=True)
-
-
-if not st.session_state.intro_played:
-    # Previous intro disabled in v3
-    skip_clicked = st.button("Skip Intro", key="skip_intro_btn")
-    # Mark as played immediately so the intro never replays this session,
-    # whether it finishes on its own (~2.3s) or the user skips it.
-    st.session_state.intro_played = True
-    if skip_clicked:
-        st.rerun()
 
 
 def animated_counter(value_text, prefix="", suffix="", color="#1F1811", size="27px", duration=900, key=""):
@@ -1481,11 +1075,11 @@ CHART_TEMPLATE = dict(
     template="plotly_white",
     paper_bgcolor="#FFFDF7",
     plot_bgcolor="#FFFDF7",
-    font=dict(color="#2E2013", size=13, family="Georgia, 'Playfair Display', serif"),
+    font=dict(color="#1C170F", size=15, family="Georgia, 'Playfair Display', serif"),
 )
 
-AXIS_TICK_FONT = dict(color="#2E2013", size=12, family="Georgia, serif")
-AXIS_TITLE_FONT = dict(color="#2E2013", size=13, family="Georgia, serif")
+AXIS_TICK_FONT = dict(color="#1C170F", size=14, family="Georgia, serif")
+AXIS_TITLE_FONT = dict(color="#1C170F", size=15, family="Georgia, serif")
 
 
 def compute_confidence_band(metal, forecast, featured_data, z=1.28, vol_window=60):
@@ -1512,24 +1106,25 @@ def create_forecast_chart(metal, forecast, featured_data, currency):
 
     fig.add_trace(go.Scatter(
         x=history.index, y=history["Close"] * CURRENCIES[currency], mode="lines",
-        name="Historical", line=dict(color="#B8892E", width=2)
+        name="Historical", line=dict(color="#8C6A2E", width=3)
     ))
 
     fig.add_trace(go.Scatter(
         x=[history.index[-1]], y=[history["Close"].iloc[-1] * CURRENCIES[currency]], mode="markers",
-        name="Current", marker=dict(size=11, color="#8C6A2E", symbol="diamond")
+        name="Current", marker=dict(size=13, color="#1C170F", symbol="diamond",
+                                     line=dict(width=1.5, color="#FFFDF7"))
     ))
 
     if "SMA_20" in history.columns:
         fig.add_trace(go.Scatter(
             x=history.index, y=history["SMA_20"] * CURRENCIES[currency], mode="lines",
-            name="SMA 20", line=dict(color="#A08B63", width=1.5), visible="legendonly"
+            name="SMA 20", line=dict(color="#A08B63", width=1.8), visible="legendonly"
         ))
 
     if "SMA_50" in history.columns:
         fig.add_trace(go.Scatter(
             x=history.index, y=history["SMA_50"] * CURRENCIES[currency], mode="lines",
-            name="SMA 50", line=dict(color="#5C4A32", width=1.5), visible="legendonly"
+            name="SMA 50", line=dict(color="#5C4A32", width=1.8), visible="legendonly"
         ))
 
     # Shaded confidence range (drawn before the forecast line so it sits underneath)
@@ -1537,7 +1132,7 @@ def create_forecast_chart(metal, forecast, featured_data, currency):
         x=pd.concat([forecast["Date"], forecast["Date"][::-1]]),
         y=list(upper * CURRENCIES[currency]) + list(lower[::-1] * CURRENCIES[currency]),
         fill="toself",
-        fillcolor="rgba(76,107,72,0.15)",
+        fillcolor="rgba(21,128,61,0.16)",
         line=dict(color="rgba(0,0,0,0)"),
         hoverinfo="skip",
         name="~80% Confidence Range",
@@ -1546,14 +1141,14 @@ def create_forecast_chart(metal, forecast, featured_data, currency):
     fig.add_trace(go.Scatter(
         x=forecast["Date"], y=forecast["Forecast"] * CURRENCIES[currency], mode="lines+markers",
         name="Forecast",
-        line=dict(color="#4C6B48", width=3, dash="dash"),
-        marker=dict(size=6)
+        line=dict(color="#15803D", width=4, dash="dash"),
+        marker=dict(size=7)
     ))
 
     fig.add_trace(go.Scatter(
         x=[forecast["Date"].iloc[0]], y=[forecast["Forecast"].iloc[0] * CURRENCIES[currency]],
         mode="markers", name="Forecast Start",
-        marker=dict(size=12, color="#4C6B48", symbol="star")
+        marker=dict(size=14, color="#15803D", symbol="star", line=dict(width=1.5, color="#FFFDF7"))
     ))
 
     default_window_days = 90
@@ -1564,13 +1159,13 @@ def create_forecast_chart(metal, forecast, featured_data, currency):
     default_y_range = [visible_low - y_pad, visible_high + y_pad]
 
     fig.update_layout(
-        height=560,
+        height=620,
         hovermode="x unified",
-        margin=dict(l=55, r=30, t=170, b=10),
+        margin=dict(l=60, r=30, t=170, b=10),
         showlegend=True,
         legend=dict(
             orientation="h", x=0, xanchor="left", y=1.02, yanchor="bottom",
-            font=dict(color="#2E2013", size=12, family="Georgia, serif"),
+            font=dict(color="#1C170F", size=14, family="Georgia, serif"),
             bgcolor="rgba(255,253,247,0.9)",
         ),
         annotations=[
@@ -1579,7 +1174,7 @@ def create_forecast_chart(metal, forecast, featured_data, currency):
                 xref="paper", yref="paper",
                 x=0, xanchor="left", y=1.34, yanchor="bottom",
                 showarrow=False,
-                font=dict(color="#241B0F", size=19, family="'Playfair Display', Georgia, serif"),
+                font=dict(color="#1C170F", size=22, family="'Playfair Display', Georgia, serif"),
             )
         ],
         **CHART_TEMPLATE,
@@ -1587,8 +1182,9 @@ def create_forecast_chart(metal, forecast, featured_data, currency):
     fig.update_xaxes(
         showgrid=False,
         tickfont=AXIS_TICK_FONT,
-        linecolor="#8C7A54",
-        rangeslider=dict(visible=True, thickness=0.05, bgcolor="#EFE4CD"),
+        linecolor="#5A4C30",
+        linewidth=1.5,
+        rangeslider=dict(visible=True, thickness=0.06, bgcolor="#EFE4CD"),
         rangeselector=dict(
             buttons=[
                 dict(count=7, label="7D", step="day", stepmode="backward"),
@@ -1601,18 +1197,20 @@ def create_forecast_chart(metal, forecast, featured_data, currency):
             bgcolor="#FFFDF7",
             activecolor="#B8892E",
             bordercolor="#B8892E",
-            borderwidth=1,
-            font=dict(color="#241B0F", size=12, family="Georgia, serif"),
+            borderwidth=1.5,
+            font=dict(color="#1C170F", size=13, family="Georgia, serif"),
             x=0, xanchor="left", y=1.18, yanchor="bottom",
         ),
         # Default view: recent history through the end of the forecast horizon
         range=[history.index[-default_window_days], forecast["Date"].iloc[-1]],
     )
     fig.update_yaxes(
-        showgrid=True, gridcolor="#EFE4CD",
+        showgrid=True, gridcolor="#E4D7B4",
         title=dict(text="Price", font=AXIS_TITLE_FONT),
         tickfont=AXIS_TICK_FONT,
         range=default_y_range,
+        linecolor="#5A4C30",
+        linewidth=1.5,
     )
 
     return fig
@@ -1625,53 +1223,53 @@ def create_technical_chart(metal, featured_data, indicator, currency, window_day
 
     if indicator == "RSI":
         fig.add_trace(go.Scatter(x=history.index, y=history["RSI"], mode="lines",
-                                  name="RSI", line=dict(color="#3B6FA0", width=2)))
-        fig.add_hline(y=70, line=dict(color="#8C3A2C", width=1, dash="dot"), annotation_text="Overbought (70)")
-        fig.add_hline(y=30, line=dict(color="#4C6B48", width=1, dash="dot"), annotation_text="Oversold (30)")
+                                  name="RSI", line=dict(color="#3B6FA0", width=2.5)))
+        fig.add_hline(y=70, line=dict(color="#B91C1C", width=1.5, dash="dot"), annotation_text="Overbought (70)")
+        fig.add_hline(y=30, line=dict(color="#15803D", width=1.5, dash="dot"), annotation_text="Oversold (30)")
         fig.update_yaxes(range=[0, 100], title=dict(text="RSI", font=AXIS_TITLE_FONT))
         title = f"{metal} — Relative Strength Index (RSI)"
 
     elif indicator == "MACD":
         fig.add_trace(go.Scatter(x=history.index, y=history["MACD"], mode="lines",
-                                  name="MACD", line=dict(color="#4C6B48", width=2)))
+                                  name="MACD", line=dict(color="#15803D", width=2.5)))
         fig.add_trace(go.Scatter(x=history.index, y=history["MACD_SIGNAL"], mode="lines",
-                                  name="Signal", line=dict(color="#B8892E", width=2, dash="dash")))
+                                  name="Signal", line=dict(color="#B8892E", width=2.5, dash="dash")))
         hist = history["MACD"] - history["MACD_SIGNAL"]
-        bar_colors = ["#4C6B48" if v >= 0 else "#8C3A2C" for v in hist]
+        bar_colors = ["#15803D" if v >= 0 else "#B91C1C" for v in hist]
         fig.add_trace(go.Bar(x=history.index, y=hist, name="Histogram",
-                              marker=dict(color=bar_colors, opacity=0.4)))
+                              marker=dict(color=bar_colors, opacity=0.5)))
         fig.update_yaxes(title=dict(text="MACD", font=AXIS_TITLE_FONT))
         title = f"{metal} — MACD"
 
     elif indicator == "SMA":
         fig.add_trace(go.Scatter(x=history.index, y=history["Close"] * CURRENCIES[currency], mode="lines",
-                                  name="Close", line=dict(color="#2E271F", width=2)))
+                                  name="Close", line=dict(color="#1C170F", width=2.5)))
         fig.add_trace(go.Scatter(x=history.index, y=history["SMA_5"] * CURRENCIES[currency], mode="lines",
-                                  name="SMA 5", line=dict(color="#B8892E", width=1.4)))
+                                  name="SMA 5", line=dict(color="#B8892E", width=1.8)))
         fig.add_trace(go.Scatter(x=history.index, y=history["SMA_20"] * CURRENCIES[currency], mode="lines",
-                                  name="SMA 20", line=dict(color="#A08B63", width=1.4)))
+                                  name="SMA 20", line=dict(color="#A08B63", width=1.8)))
         fig.add_trace(go.Scatter(x=history.index, y=history["SMA_50"] * CURRENCIES[currency], mode="lines",
-                                  name="SMA 50", line=dict(color="#5C4A32", width=1.4)))
+                                  name="SMA 50", line=dict(color="#5C4A32", width=1.8)))
         fig.update_yaxes(title=dict(text="Price", font=AXIS_TITLE_FONT))
         title = f"{metal} — Moving Averages"
 
     else:  # Volatility
         fig.add_trace(go.Scatter(x=history.index, y=history["Volatility"] * 100, mode="lines",
-                                  name="Volatility", line=dict(color="#8C3A2C", width=2),
-                                  fill="tozeroy", fillcolor="rgba(140,58,44,0.12)"))
+                                  name="Volatility", line=dict(color="#B91C1C", width=2.5),
+                                  fill="tozeroy", fillcolor="rgba(185,28,28,0.14)"))
         fig.update_yaxes(title=dict(text="10D Rolling Volatility (%)", font=AXIS_TITLE_FONT))
         title = f"{metal} — Volatility"
 
     fig.update_layout(
-        height=340,
-        margin=dict(l=55, r=30, t=60, b=10),
+        height=380,
+        margin=dict(l=60, r=30, t=60, b=10),
         showlegend=True,
-        legend=dict(orientation="h", x=0, y=1.12, font=dict(size=11, color="#2E2013")),
-        title=dict(text=title, font=dict(size=15, color="#241B0F", family="'Playfair Display', Georgia, serif")),
+        legend=dict(orientation="h", x=0, y=1.12, font=dict(size=13, color="#1C170F")),
+        title=dict(text=title, font=dict(size=17, color="#1C170F", family="'Playfair Display', Georgia, serif")),
         **CHART_TEMPLATE,
     )
-    fig.update_xaxes(showgrid=False, tickfont=AXIS_TICK_FONT, linecolor="#8C7A54")
-    fig.update_yaxes(showgrid=True, gridcolor="#EFE4CD", tickfont=AXIS_TICK_FONT)
+    fig.update_xaxes(showgrid=False, tickfont=AXIS_TICK_FONT, linecolor="#5A4C30")
+    fig.update_yaxes(showgrid=True, gridcolor="#E4D7B4", tickfont=AXIS_TICK_FONT)
     return fig
 
 
@@ -1680,20 +1278,20 @@ def create_prediction_history_chart(metal, prediction_history, currency, window_
     df = prediction_history[metal].tail(window_days).copy()
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=df["Date"], y=df["Actual"] * CURRENCIES[currency], mode="lines",
-                              name="Actual", line=dict(color="#2E271F", width=2)))
+                              name="Actual", line=dict(color="#1C170F", width=2.5)))
     fig.add_trace(go.Scatter(x=df["Date"], y=df["Predicted"] * CURRENCIES[currency], mode="lines",
-                              name="Predicted", line=dict(color="#4C6B48", width=2, dash="dash")))
+                              name="Predicted", line=dict(color="#15803D", width=2.5, dash="dash")))
     fig.update_layout(
-        height=360,
-        margin=dict(l=55, r=30, t=60, b=10),
+        height=380,
+        margin=dict(l=60, r=30, t=60, b=10),
         showlegend=True,
-        legend=dict(orientation="h", x=0, y=1.12, font=dict(size=11, color="#2E2013")),
+        legend=dict(orientation="h", x=0, y=1.12, font=dict(size=13, color="#1C170F")),
         title=dict(text=f"{metal} — Predicted vs Actual (Held-out Test Window)",
-                   font=dict(size=15, color="#241B0F", family="'Playfair Display', Georgia, serif")),
+                   font=dict(size=17, color="#1C170F", family="'Playfair Display', Georgia, serif")),
         **CHART_TEMPLATE,
     )
-    fig.update_xaxes(showgrid=False, tickfont=AXIS_TICK_FONT, linecolor="#8C7A54")
-    fig.update_yaxes(showgrid=True, gridcolor="#EFE4CD", title=dict(text="Price", font=AXIS_TITLE_FONT), tickfont=AXIS_TICK_FONT)
+    fig.update_xaxes(showgrid=False, tickfont=AXIS_TICK_FONT, linecolor="#5A4C30")
+    fig.update_yaxes(showgrid=True, gridcolor="#E4D7B4", title=dict(text="Price", font=AXIS_TITLE_FONT), tickfont=AXIS_TICK_FONT)
     return fig
 
 
@@ -1756,13 +1354,22 @@ def signal_css_class(signal):
     return "signal-hold"
 
 
+def signal_bg_class(signal):
+    """Maps a trading signal to the AI signal card's background treatment."""
+    if "BUY" in signal:
+        return "signal-bg-buy"
+    if "SELL" in signal:
+        return "signal-bg-sell"
+    return "signal-bg-hold"
+
+
 def confidence_tier(confidence):
     """Returns (tier label, text color, bar/badge color) for the confidence score."""
     if confidence >= 80:
-        return "High", "#2E4A2A", "#4C6B48"
+        return "High", "#15803D", "#15803D"
     if confidence >= 65:
         return "Medium", "#7A5B1E", "#B8892E"
-    return "Low", "#8C3A2C", "#A6493A"
+    return "Low", "#B91C1C", "#B91C1C"
 
 
 def compute_24h_change(featured_data, metal):
@@ -1893,7 +1500,7 @@ def pulse_css_class(label):
 
 
 def pulse_bar_color(label):
-    return {"Bullish": "#4C6B48", "Neutral": "#B8892E", "Bearish": "#A6493A"}[label]
+    return {"Bullish": "#15803D", "Neutral": "#B8892E", "Bearish": "#B91C1C"}[label]
 
 
 def render_market_pulse_card(metal, pulse):
@@ -1910,7 +1517,7 @@ def render_market_pulse_card(metal, pulse):
             <div class="pulse-score-wrap">
                 <div class="pulse-score-fill" style="background:{bar_color}; --target-width:{pulse['score']}%;"></div>
             </div>
-            <div style="text-align:center;font-size:12px;color:#8C7A54;margin-top:4px;">Pulse score: <b>{pulse['score']}</b> / 100</div>
+            <div style="text-align:center;font-size:12px;color:#5A4C30;margin-top:4px;">Pulse score: <b>{pulse['score']}</b> / 100</div>
             <ul class="pulse-reason-list">{reasons_html}</ul>
         </div>
         """,
@@ -1996,7 +1603,7 @@ def create_ticker_sparkline(series, currency, line_color, fill_color):
     if series.empty:
         fig.add_annotation(
             text="Live data unavailable", showarrow=False,
-            font=dict(color="#8C7A54", size=11),
+            font=dict(color="#5A4C30", size=13),
         )
         y_range = None
     else:
@@ -2008,13 +1615,13 @@ def create_ticker_sparkline(series, currency, line_color, fill_color):
 
         fig.add_trace(go.Scatter(
             x=x, y=y, mode="lines",
-            line=dict(color=line_color, width=1.8),
+            line=dict(color=line_color, width=2.2),
             fill="tozeroy", fillcolor=fill_color,
             hovertemplate="%{y:.2f}<extra></extra>",
         ))
         fig.add_trace(go.Scatter(
             x=[x[-1]], y=[y[-1]], mode="markers",
-            marker=dict(size=6, color=line_color),
+            marker=dict(size=7, color=line_color),
             showlegend=False, hoverinfo="skip",
         ))
 
@@ -2073,9 +1680,9 @@ def render_live_banner(currency):
         f"""
         <div class="live-banner">
             <span class="live-dot"></span>
-            <div class="live-item"><div class="live-label">Gold</div><div class="live-value {gold_flash}" style="color:#B8892E;">{currency} {gold_display}</div></div>
-            <div class="live-item"><div class="live-label">Silver</div><div class="live-value {silver_flash}" style="color:#6B7280;">{currency} {silver_display}</div></div>
-            <div class="live-item"><div class="live-label">USD/INR</div><div class="live-value" style="color:#3B6FA0;">{market['USDINR']} <small style="color:#8C7A54;font-weight:400;">(static)</small></div></div>
+            <div class="live-item"><div class="live-label">Gold</div><div class="live-value {gold_flash}" style="color:#8C6A2E;">{currency} {gold_display}</div></div>
+            <div class="live-item"><div class="live-label">Silver</div><div class="live-value {silver_flash}" style="color:#3F4652;">{currency} {silver_display}</div></div>
+            <div class="live-item"><div class="live-label">USD/INR</div><div class="live-value" style="color:#2A5580;">{market['USDINR']} <small style="color:#5A4C30;font-weight:600;">(static)</small></div></div>
             <div class="live-item"><div class="live-label">Updated</div><div class="live-value">{market['Time']}</div></div>
         </div>
         """,
@@ -2262,12 +1869,12 @@ def create_comparison_chart(currency, models, featured_data, performance):
         barmode="group",
         height=380,
         margin=dict(l=40, r=20, t=50, b=10),
-        title=dict(text="Gold vs Silver — Head to Head", font=dict(size=16, color="#241B0F", family="'Playfair Display', Georgia, serif")),
-        legend=dict(orientation="h", x=0, y=1.12, font=dict(size=12, color="#2E2013")),
+        title=dict(text="Gold vs Silver — Head to Head", font=dict(size=17, color="#1C170F", family="'Playfair Display', Georgia, serif")),
+        legend=dict(orientation="h", x=0, y=1.12, font=dict(size=13, color="#1C170F")),
         **CHART_TEMPLATE,
     )
     fig.update_xaxes(showgrid=False, tickfont=AXIS_TICK_FONT)
-    fig.update_yaxes(showgrid=True, gridcolor="#EFE4CD", tickfont=AXIS_TICK_FONT)
+    fig.update_yaxes(showgrid=True, gridcolor="#E4D7B4", tickfont=AXIS_TICK_FONT)
     return fig
 
 
@@ -2493,7 +2100,7 @@ def scenario_paths(metal, days, models, featured_data, inflation=0.0, usd_streng
 
 def create_scenario_chart(paths, currency):
     fig = go.Figure()
-    palette = {"Base": "#B8892E", "Bull": "#4C6B48", "Bear": "#A6493A", "Stress": "#5C4A32"}
+    palette = {"Base": "#B8892E", "Bull": "#15803D", "Bear": "#B91C1C", "Stress": "#5C4A32"}
     for name in ["Base", "Bull", "Bear", "Stress"]:
         fig.add_trace(go.Scatter(
             x=paths["Date"], y=paths[name] * CURRENCIES[currency],
@@ -2502,7 +2109,7 @@ def create_scenario_chart(paths, currency):
     fig.update_layout(height=480, hovermode="x unified", margin=dict(l=45,r=20,t=55,b=20),
                       title="Digital Twin — Scenario Universe", **CHART_TEMPLATE)
     fig.update_xaxes(showgrid=False)
-    fig.update_yaxes(gridcolor="#EFE4CD", title="Price")
+    fig.update_yaxes(gridcolor="#E4D7B4", title="Price")
     return fig
 
 
@@ -2543,7 +2150,7 @@ def create_monte_carlo_chart(dates, paths, currency):
     fig.update_layout(height=500, title="Monte Carlo Future Universe", hovermode="x unified",
                       margin=dict(l=45,r=20,t=55,b=20), **CHART_TEMPLATE)
     fig.update_xaxes(showgrid=False)
-    fig.update_yaxes(gridcolor="#EFE4CD", title="Price")
+    fig.update_yaxes(gridcolor="#E4D7B4", title="Price")
     return fig
 
 
@@ -2561,7 +2168,7 @@ def render_prediction_beam(metal, featured_data, performance):
       background:rgba(255,253,247,.94);border:1px solid #B8892E;box-shadow:0 0 25px rgba(232,197,106,.18);
       animation:beamPulse 2.2s ease-in-out infinite}}
     .beam-node b{{display:block;color:#8C6A2E;font-family:'Playfair Display',serif;font-size:14px}}
-    .beam-node small{{color:#6B5D46}}
+    .beam-node small{{color:#4A3F2E}}
     .beam-line{{height:2px;min-width:35px;flex:1;background:linear-gradient(90deg,transparent,#E8C56A,transparent);
       background-size:200% 100%;animation:beamMove 1.2s linear infinite;box-shadow:0 0 12px #E8C56A}}
     @keyframes beamMove{{to{{background-position:-200% 0}}}}
@@ -2652,7 +2259,7 @@ def prediction_dna(metal, models, featured_data):
     influence = (imp * z).sort_values(key=np.abs, ascending=False).head(10)
     fig = go.Figure(go.Bar(
         x=influence.values, y=influence.index, orientation="h",
-        marker=dict(color=["#4C6B48" if v >= 0 else "#A6493A" for v in influence.values])
+        marker=dict(color=["#15803D" if v >= 0 else "#B91C1C" for v in influence.values])
     ))
     fig.update_layout(height=410, title="Prediction DNA — Local Influence Proxy",
                       margin=dict(l=110,r=20,t=55,b=20), **CHART_TEMPLATE)
@@ -2726,7 +2333,7 @@ def render_future_lab(models, featured_data, performance, performance_df):
     st.markdown("### AI Model Battle Arena")
     battle = create_model_battle(lab_metal, lab_days, models, featured_data)
     fig = go.Figure()
-    for name, color in [("Random Forest","#3B6FA0"),("Gradient Boosting","#A6493A"),("Blend","#B8892E")]:
+    for name, color in [("Random Forest","#3B6FA0"),("Gradient Boosting","#B91C1C"),("Blend","#B8892E")]:
         fig.add_trace(go.Scatter(x=battle["Date"], y=battle[name]*CURRENCIES[lab_currency],
                                  mode="lines", name=name, line=dict(width=3 if name=="Blend" else 2, color=color)))
     fig.update_layout(height=430, title="RF vs GBM vs Blended Ensemble", **CHART_TEMPLATE)
@@ -2761,7 +2368,7 @@ def render_future_lab(models, featured_data, performance, performance_df):
                                 name="Prediction from cutoff", line=dict(color="#B8892E", width=3, dash="dash")))
         if reveal:
             tf.add_trace(go.Scatter(x=tm["Date"], y=tm["Reality"]*CURRENCIES[lab_currency],
-                                    name="Reality", line=dict(color="#2E271F", width=3)))
+                                    name="Reality", line=dict(color="#1C170F", width=3)))
         tf.update_layout(height=400, title=f"Time Machine — {cutoff}", **CHART_TEMPLATE)
         st.plotly_chart(tf, use_container_width=True, key="time_machine_chart")
 
@@ -2782,11 +2389,11 @@ def render_future_lab(models, featured_data, performance, performance_df):
       box-shadow:0 20px 60px rgba(46,39,31,.22);">
       <div style="font-size:12px;letter-spacing:.25em;color:#E8C56A">COMMAND CENTRE / {lab_metal.upper()}</div>
       <div style="display:flex;gap:35px;flex-wrap:wrap;margin-top:16px">
-        <div><small style="color:#C9B98F">CURRENT</small><div style="font-size:34px;font-family:'Playfair Display'">{lab_currency} {stats['Current Price']:,.2f}</div></div>
-        <div><small style="color:#C9B98F">{lab_days}D FUTURE</small><div style="font-size:34px;font-family:'Playfair Display'">{lab_currency} {stats['Forecast Price']:,.2f}</div></div>
-        <div><small style="color:#C9B98F">SIGNAL</small><div style="font-size:34px;font-family:'Playfair Display';color:#E8C56A">{stats['Signal']}</div></div>
-        <div><small style="color:#C9B98F">PULSE</small><div style="font-size:34px;font-family:'Playfair Display'">{pulse['label']}</div></div>
-        <div><small style="color:#C9B98F">CONFIDENCE</small><div style="font-size:34px;font-family:'Playfair Display'">{stats['Confidence']:.1f}%</div></div>
+        <div><small style="color:#D8CBA6">CURRENT</small><div style="font-size:34px;font-family:'Playfair Display'">{lab_currency} {stats['Current Price']:,.2f}</div></div>
+        <div><small style="color:#D8CBA6">{lab_days}D FUTURE</small><div style="font-size:34px;font-family:'Playfair Display'">{lab_currency} {stats['Forecast Price']:,.2f}</div></div>
+        <div><small style="color:#D8CBA6">SIGNAL</small><div style="font-size:34px;font-family:'Playfair Display';color:#E8C56A">{stats['Signal']}</div></div>
+        <div><small style="color:#D8CBA6">PULSE</small><div style="font-size:34px;font-family:'Playfair Display'">{pulse['label']}</div></div>
+        <div><small style="color:#D8CBA6">CONFIDENCE</small><div style="font-size:34px;font-family:'Playfair Display'">{stats['Confidence']:.1f}%</div></div>
       </div>
     </div>
     """, unsafe_allow_html=True)
@@ -2899,22 +2506,23 @@ with tab_forecast:
     r2_pct = max(performance[metal]["R2 (price)"], 0) * 100
     conf_label, conf_text_color, conf_bar_color = confidence_tier(stats["Confidence"])
 
-    # Stronger hierarchy: one hero prediction + one AI signal panel.
+    # Stronger hierarchy: one large hero prediction + one bold color-coded
+    # BUY/SELL/HOLD signal panel — these are the primary focus of the page.
     hero_col, signal_col = st.columns([2.15, 1])
     with hero_col:
         f_arrow, f_class = trend_arrow(stats["Expected Return"])
-        momentum_text = "Bearish momentum" if stats["Expected Return"] < -0.5 else ("Bullish momentum" if stats["Expected Return"] > 0.5 else "Neutral momentum")
+        move_class = "up" if stats["Expected Return"] > 0.05 else ("down" if stats["Expected Return"] < -0.05 else "soft")
         st.markdown(
             f"""<div class="prediction-hero">
               <div class="eyebrow">{metal.upper()} · AI PRICE PATH · {forecast_days} DAY HORIZON</div>
               <div class="prediction-flow">
-                <span class="price">{currency} {convert_price_unit(stats['Current Price'], price_unit)}</span>
+                <span class="price current">{currency} {convert_price_unit(stats['Current Price'], price_unit)}</span>
                 <span class="arrow">→</span>
                 <span class="price">{currency} {convert_price_unit(stats['Forecast Price'], price_unit)}</span>
-                <span style="font-size:13px;color:#8C7A54">{get_unit_symbol(price_unit)}</span>
+                <span style="font-size:14px;color:#5A4C30;font-weight:700;">{get_unit_symbol(price_unit)}</span>
               </div>
               <div class="prediction-meta">
-                <span class="prediction-chip">{f_arrow} {stats['Expected Return']:+.2f}% expected</span>
+                <span class="prediction-chip {move_class}">{f_arrow} {stats['Expected Return']:+.2f}% expected</span>
                 <span class="prediction-chip soft">{change_24h:+.2f}% today</span>
                 <span class="prediction-chip dark">{stats['Confidence']:.2f}% confidence</span>
               </div>
@@ -2924,8 +2532,9 @@ with tab_forecast:
     with signal_col:
         signal = stats["Signal"]
         momentum_text = "Bearish momentum" if stats["Expected Return"] < -0.5 else ("Bullish momentum" if stats["Expected Return"] > 0.5 else "Neutral momentum")
+        bg_class = signal_bg_class(signal)
         st.markdown(
-            f"""<div class="ai-signal-card">
+            f"""<div class="ai-signal-card {bg_class}">
               <div class="eyebrow">AI SIGNAL ENGINE</div>
               <div class="signal">{signal}</div>
               <div class="sub">{momentum_text}<br>Projected move: <b>{stats['Expected Return']:+.2f}%</b><br>Directional accuracy: <b>{dir_acc:.1f}%</b></div>
@@ -3058,7 +2667,7 @@ with tab_advisor:
         scenario_metal, scenario_investment, scenario_change, scenario_currency, models, featured_data, performance
     )
     row = scenario_df.iloc[0]
-    roi_color = "#385B34" if row["ROI %"] >= 0 else "#8C3A2C"
+    roi_color = "#15803D" if row["ROI %"] >= 0 else "#B91C1C"
     st.markdown(
         f"""<div class="scenario-readout">
         If {scenario_metal} moves <b>{scenario_change:+d}%</b> from {scenario_currency} {row['Current Price']:,.2f} to
@@ -3228,8 +2837,3 @@ st.markdown(
     </div>""",
     unsafe_allow_html=True,
 )
-
-
-# V3 note:
-# The old doorway intro implementation is intentionally left in this file for rollback,
-# but its render call is disabled above. The active experience is Data -> Metal.
